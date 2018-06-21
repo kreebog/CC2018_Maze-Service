@@ -25,6 +25,8 @@ class Maze {
         this.width = 0;
         this.seed = '';
         this.textRender = '';
+        this.id = '';
+        this.version = 0;
         // don't let the maze get too big or the server will run out of memory during generation
         this.MAX_CELL_COUNT = 2500;
     }
@@ -41,6 +43,12 @@ class Maze {
     getWidth() {
         return this.width;
     }
+    getId() {
+        return this.id;
+    }
+    getVersion() {
+        return this.version;
+    }
     getMaxCellCount() {
         return this.MAX_CELL_COUNT;
     }
@@ -53,15 +61,22 @@ class Maze {
     generate(height, width, seed) {
         log.info(__filename, 'generate()', util_1.default.format('Generating new %d (height) x %d (width) maze with seed "%s"', height, width, seed));
         startGenTime = Date.now();
+        // set the dimensions
         this.height = height;
         this.width = width;
+        // check for size constraint
         if (height * width > this.MAX_CELL_COUNT) {
             throw util_1.default.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', this.MAX_CELL_COUNT, height, width, (height * width));
         }
+        // implement random seed
         if (seed && seed.length > 0) {
             this.seed = seed;
             seedrandom_1.default(seed, { global: true });
         }
+        // set version and ID
+        this.version = 1;
+        this.id = util_1.default.format('%d:%d:%s:v%d', this.height, this.width, this.seed, this.version);
+        // build the empty cells array
         this.cells = new Array(height);
         for (let y = 0; y < height; y++) {
             let row = new Array();
@@ -73,16 +88,16 @@ class Maze {
             this.cells[y] = row;
         }
         log.debug(__filename, 'generate()', util_1.default.format('Generated [%d][%d] grid of %d empty cells.', height, width, (height * width)));
+        // randomize start and finish locations
         let startCol = Math.floor(Math.random() * width);
         let finishCol = Math.floor(Math.random() * width);
-        // set random start and finish columns
         log.debug(__filename, 'generate()', util_1.default.format('Adding START ([%d][%d]) and FINISH ([%d][%d]) cells.', 0, startCol, height - 1, finishCol));
         // tag start and finish columns (start / finish tags force matching exits on edge)
         this.cells[0][startCol].addTag(Enums.TAGS.START);
         this.cells[height - 1][finishCol].addTag(Enums.TAGS.FINISH);
         // start the carving routine
         this.carvePassage(this.cells[0][0]);
-        log.info(__filename, 'generate()', util_1.default.format('Maze generation completed in %dms. Max recursion: %d.', (Date.now() - startGenTime), maxCarveDepth));
+        log.info(__filename, 'generate()', util_1.default.format('Generation Complete: Time=%dms, Recursion=%d, MazeID=%s', (Date.now() - startGenTime), maxCarveDepth, this.getId()));
         return this;
     }
     carvePassage(cell) {
@@ -208,4 +223,3 @@ class Maze {
 }
 exports.Maze = Maze;
 exports.default = Maze;
-//# sourceMappingURL=Maze.js.map

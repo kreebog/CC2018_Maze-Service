@@ -4,7 +4,8 @@
   "description": "Maze Generation Service for Code Camp 2018",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "watch": "nodemon ./bin/service.js",
+    "start": "node ./bin/service.js"
   },
   "repository": {
     "type": "git",
@@ -18,10 +19,15 @@
   "homepage": "https://github.com/kreebog/CC2018_Maze_Generator#readme",
   "dependencies": {
     "express": "^4.16.3",
-    "seedrandom": "^2.4.3"
+    "mongodb": "^3.0.10",
+    "seedrandom": "^2.4.3",
+    "typescript": "^2.9.2"
   },
   "devDependencies": {
     "@types/express": "^4.16.0",
-    "@types/seedrandom": "^2.4.27"
+    "@types/mongodb": "^3.0.21",
+    "@types/seedrandom": "^2.4.27",
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1"
   }
 }

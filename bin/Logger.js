@@ -69,4 +69,3 @@ function trace(file, method, message) {
     }
 }
 exports.trace = trace;
-//# sourceMappingURL=Logger.js.map

@@ -7,15 +7,37 @@ import fs from 'fs';
 import { Maze } from './Maze';
 
 const AppInfo = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-//const dbcMazes: Collec1tion<any> = ;
-
 
 log.setLogLevel(log.LOG_LEVELS.INFO);
 log.info(__filename, '', util.format('Starting %s v%s in %s', AppInfo.name, AppInfo.version, __dirname));
 
-let maze = getMaze(10, 12, 'SuperSeedy', 1);
+interface IMazeCallback {
+    (error: any, maze?: Maze) : void;
+}
 
-console.log(maze.render());
+function getMazeCB (callback: IMazeCallback) : void {
+    let maze = new Maze().generate(50, 50, 'simple', 1);
+
+    if (false) {
+        callback(new Error('whoops'));
+    } else {
+        callback(null, maze);
+    }
+}
+
+getMazeCB(
+    ( error: any, maze?: Maze) : void => {
+        if (error) {
+            console.log('Error generating maze: ', error);
+        } else if (maze) {
+            console.log(maze.render());
+        }
+    }
+);
+
+
+//let maze = getMaze(10, 12, 'SuperSeedy', 1);
+//console.log(maze.render());
 
 //TODO: This needs to be a callback
 function getMaze(height: number, width: number, seed: string, version: number): Maze {

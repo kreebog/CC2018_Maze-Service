@@ -16,11 +16,27 @@ const log = __importStar(require("./Logger"));
 const fs_1 = __importDefault(require("fs"));
 const Maze_1 = require("./Maze");
 const AppInfo = JSON.parse(fs_1.default.readFileSync('package.json', 'utf8'));
-//const dbcMazes: Collec1tion<any> = ;
 log.setLogLevel(log.LOG_LEVELS.INFO);
 log.info(__filename, '', util_1.default.format('Starting %s v%s in %s', AppInfo.name, AppInfo.version, __dirname));
-let maze = getMaze(10, 12, 'SuperSeedy', 1);
-console.log(maze.render());
+function getMazeCB(callback) {
+    let maze = new Maze_1.Maze().generate(50, 50, 'simple', 1);
+    if (false) {
+        callback(new Error('whoops'));
+    }
+    else {
+        callback(null, maze);
+    }
+}
+getMazeCB((error, maze) => {
+    if (error) {
+        console.log('Error generating maze: ', error);
+    }
+    else if (maze) {
+        console.log(maze.render());
+    }
+});
+//let maze = getMaze(10, 12, 'SuperSeedy', 1);
+//console.log(maze.render());
 //TODO: This needs to be a callback
 function getMaze(height, width, seed, version) {
     //let dbUrl = 'mongodb://mongodb-code-camp-2018.a3c1.starter-us-west-1.openshiftapps.com:34000/sampledb';

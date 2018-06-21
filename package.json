@@ -1,0 +1,27 @@
+{
+  "name": "cc2018_maze_generator",
+  "version": "1.0.0",
+  "description": "Maze Generation Service for Code Camp 2018",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kreebog/CC2018_Maze_Generator.git"
+  },
+  "author": "James Dean",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kreebog/CC2018_Maze_Generator/issues"
+  },
+  "homepage": "https://github.com/kreebog/CC2018_Maze_Generator#readme",
+  "dependencies": {
+    "express": "^4.16.3",
+    "seedrandom": "^2.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.16.0",
+    "@types/seedrandom": "^2.4.27"
+  }
+}

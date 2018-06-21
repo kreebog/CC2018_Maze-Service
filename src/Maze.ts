@@ -23,9 +23,19 @@ export class Maze {
     constructor() {
     }
 
-    public loadFromJSON(dataFile: File) {
-        let mazeData: string = ''; //fs.loadFile('./maze_001.json');
-        throw new Error("Not implemented.");
+    // loads object from values given in json string
+    public loadFromJSON(jsonMaze: string): this {
+        let obj = JSON.parse(jsonMaze);
+
+        this.cells = obj.cells;
+        this.height = obj.height;
+        this.width = obj.width;
+        this.seed = obj.seed;
+        this.textRender = obj.textRender;
+        this.id = obj.id;
+        this.version = obj.version;
+
+        return this;
     }
 
     public getSeed(): string {
@@ -58,13 +68,19 @@ export class Maze {
      * @param width - The width of the maze grid
      * @param seed - PRNG seed value.  If empty, maze will be random and unrepeatable
      */
-    public generate(height: number, width: number, seed: string): this {
+    public generate(height: number, width: number, seed: string, version: number): this {
+        if (this.cells.length > 0) {
+            log.warn(__filename, 'generate()', 'This maze has already been generated.');
+            return this;
+        } 
+
         log.info(__filename, 'generate()', util.format('Generating new %d (height) x %d (width) maze with seed "%s"', height, width, seed));
         startGenTime = Date.now();
 
         // set the dimensions
         this.height = height;
         this.width = width;
+        this.version = version;
 
         // check for size constraint
         if (height * width > this.MAX_CELL_COUNT) {
@@ -78,8 +94,7 @@ export class Maze {
         }
 
         // set version and ID
-        this.version = 1;
-        this.id = util.format('%d:%d:%s:v%d', this.height, this.width, this.seed, this.version);
+        this.id = util.format('%d:%d:%s:%d', this.height, this.width, this.seed, this.version);
 
         // build the empty cells array
         this.cells = new Array(height);
@@ -108,6 +123,9 @@ export class Maze {
 
         // start the carving routine
         this.carvePassage(this.cells[0][0]);
+
+        // render the maze so the text rendering is set
+        this.render();
 
         log.info(__filename, 'generate()', util.format('Generation Complete: Time=%dms, Recursion=%d, MazeID=%s', (Date.now() - startGenTime), maxCarveDepth, this.getId())); 
         return this;

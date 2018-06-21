@@ -30,9 +30,17 @@ class Maze {
         // don't let the maze get too big or the server will run out of memory during generation
         this.MAX_CELL_COUNT = 2500;
     }
-    loadFromJSON(dataFile) {
-        let mazeData = ''; //fs.loadFile('./maze_001.json');
-        throw new Error("Not implemented.");
+    // loads object from values given in json string
+    loadFromJSON(jsonMaze) {
+        let obj = JSON.parse(jsonMaze);
+        this.cells = obj.cells;
+        this.height = obj.height;
+        this.width = obj.width;
+        this.seed = obj.seed;
+        this.textRender = obj.textRender;
+        this.id = obj.id;
+        this.version = obj.version;
+        return this;
     }
     getSeed() {
         return this.seed;
@@ -58,12 +66,17 @@ class Maze {
      * @param width - The width of the maze grid
      * @param seed - PRNG seed value.  If empty, maze will be random and unrepeatable
      */
-    generate(height, width, seed) {
+    generate(height, width, seed, version) {
+        if (this.cells.length > 0) {
+            log.warn(__filename, 'generate()', 'This maze has already been generated.');
+            return this;
+        }
         log.info(__filename, 'generate()', util_1.default.format('Generating new %d (height) x %d (width) maze with seed "%s"', height, width, seed));
         startGenTime = Date.now();
         // set the dimensions
         this.height = height;
         this.width = width;
+        this.version = version;
         // check for size constraint
         if (height * width > this.MAX_CELL_COUNT) {
             throw util_1.default.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', this.MAX_CELL_COUNT, height, width, (height * width));
@@ -74,8 +87,7 @@ class Maze {
             seedrandom_1.default(seed, { global: true });
         }
         // set version and ID
-        this.version = 1;
-        this.id = util_1.default.format('%d:%d:%s:v%d', this.height, this.width, this.seed, this.version);
+        this.id = util_1.default.format('%d:%d:%s:%d', this.height, this.width, this.seed, this.version);
         // build the empty cells array
         this.cells = new Array(height);
         for (let y = 0; y < height; y++) {
@@ -97,6 +109,8 @@ class Maze {
         this.cells[height - 1][finishCol].addTag(Enums.TAGS.FINISH);
         // start the carving routine
         this.carvePassage(this.cells[0][0]);
+        // render the maze so the text rendering is set
+        this.render();
         log.info(__filename, 'generate()', util_1.default.format('Generation Complete: Time=%dms, Recursion=%d, MazeID=%s', (Date.now() - startGenTime), maxCarveDepth, this.getId()));
         return this;
     }
@@ -223,3 +237,4 @@ class Maze {
 }
 exports.Maze = Maze;
 exports.default = Maze;
+//# sourceMappingURL=Maze.js.map

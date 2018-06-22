@@ -22,7 +22,7 @@ html(lang='en')
                                     td= maze.width
                                     td= maze.seed
                                     td
-                                        a(href='/' + maze.height + '/' + maze.width + '/' + maze.seed + '/view') view
+                                        a(href='/view/' + maze.height + '/' + maze.width + '/' + maze.seed) view
                     else
                         h3 No mazes found in the database.
 

@@ -1,102 +1,79 @@
+import path from 'path';
+import { Maze } from './Maze'
+import { format } from 'util';
+import * as log from './Logger';
 import express from 'express';
 import { MongoClient } from 'mongodb';
+import { request } from 'https';
 
-import util from 'util';
-import * as log from './Logger';
-import fs from 'fs';
-import { Maze } from './Maze';
+// constant value references
+const DB_URL = 'mongodb+srv://mdbuser:cc2018-mdbpw@cluster0-bxvkt.mongodb.net/';
+const DB_NAME = 'cc2018';
+const COL_NAME = 'mazes';
+const APP_PORT = 3000;
 
-const AppInfo = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+// constant object references
+const app = express();
 
-log.setLogLevel(log.LOG_LEVELS.INFO);
-log.info(__filename, '', util.format('Starting %s v%s in %s', AppInfo.name, AppInfo.version, __dirname));
+// configure modules
+log.setLogLevel(log.LOG_LEVELS.DEBUG);
 
-interface IMazeCallback {
-    (error: any, maze?: Maze) : void;
-}
-
-function getMazeCB (callback: IMazeCallback) : void {
-    let maze = new Maze().generate(50, 50, 'simple', 1);
-
-    if (false) {
-        callback(new Error('whoops'));
-    } else {
-        callback(null, maze);
+MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
+    if (err) {
+        log.error(__filename, '', JSON.stringify(err));
+        return err;
     }
-}
 
-getMazeCB(
-    ( error: any, maze?: Maze) : void => {
-        if (error) {
-            console.log('Error generating maze: ', error);
-        } else if (maze) {
-            console.log(maze.render());
-        }
-    }
-);
+    let db = client.db(DB_NAME);
+    let col = db.collection(COL_NAME);
 
+    app.listen(APP_PORT, function() {
+        log.info(__filename, '', format('Listening on port %d', APP_PORT));
 
-//let maze = getMaze(10, 12, 'SuperSeedy', 1);
-//console.log(maze.render());
+        app.get('/:height/:width/:seed', (req, res) => {
 
-//TODO: This needs to be a callback
-function getMaze(height: number, width: number, seed: string, version: number): Maze {
-    //let dbUrl = 'mongodb://mongodb-code-camp-2018.a3c1.starter-us-west-1.openshiftapps.com:34000/sampledb';
-    let dbUrl = 'mongodb+srv://mdbuser:cc2018-mdbpw@cluster0-bxvkt.mongodb.net/cc2018';
-    log.info(__filename, '', util.format('Connecting to database (%s)', dbUrl));
-
-    let maze = new Maze();
-    let mazeId = util.format('%d:%d:%s:%d', height, width, seed, version);
-
-    MongoClient.connect(dbUrl, function(err, client) {
-        if (err) {
-            log.error(__filename, '', JSON.stringify(err));
-            throw err;
-        }
-    
-        //get the mazes collection
-        let db = client.db('cc2018');
-        let colMazes = db.collection('mazes');
-        let mazeFound = false;
-    
-        colMazes.find({id: mazeId}).toArray(function(err, docs) {
-            if (err) {
-                log.error(__filename, '', JSON.stringify(err));
-                throw err;
-            }
-    
-            if (docs.length > 0) {
-                mazeFound = true;
-                
-                if (docs.length > 0) {
-                    log.warn(__filename, 'colMazes.find()', util.format('%d mazes found with ID!  Returning first match.', docs.length, mazeId));
-
-                    // docs.forEach(doc => {
-                    //     log.warn(__filename, 'colMazes.find()', util.format('%d mazes found with ID!  Returning first match.', docs.length, mazeId));
-                    // });
+            let mazeId = format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+            
+            let cursor = col.find({id:mazeId}).toArray( (err, docs) => {
+                if (err) {
+                    log.error(__filename, req.path, JSON.stringify(err));
+                    res.status(500).send('Unable to complete request.');
                 }
 
-                log.info(__filename, 'colMazes.find()', util.format('Loading mazeId "%s" from database.', mazeId));
-                maze.loadFromJSON(JSON.stringify(docs[0]));
-            }
+                if (docs.length > 1) {
+                    log.warn(__filename, req.path, format('%d mazes found with id "', docs.length, mazeId));
+                }
+
+                if (docs.length == 0) {
+                    log.debug(__filename, req.path, format('Maze "%s" not found.  Generating...', mazeId));
+
+                    try {
+                        let maze = new Maze().generate(req.params.height, req.params.width, req.params.seed);
+                        log.debug(__filename, req.path, format('Maze "%s" generated.  Storing...', mazeId));
+                        col.insert(maze);
+    
+                        log.debug(__filename, req.path, format('Returning Maze "%s" as JSON...', mazeId));
+                        res.status(200).send(JSON.stringify(maze));
+                    } catch (error) {
+                        log.error(__filename, req.path, format('Error during maze generation: %s', error.message));
+                        res.status(400).sendFile(path.resolve('views/error.html'));
+                    }
+
+                } else {
+                    log.debug(__filename, req.path, format('Maze "%s" found in DB, return as JSON...', mazeId));
+                    let lMaze = new Maze().loadFromJSON(JSON.stringify(docs[0]));
+                    res.status(200).send(JSON.stringify(docs[0]));
+                }
+            });
         });
-    
-        if (!mazeFound) {
-            log.info(__filename, 'colMazes.find()', util.format('No matching maze found in the database. Generating and storing...'));
-            maze.generate(height, width, seed, version);
-            colMazes.insertOne(maze);
-        }
-    
-        client.close();
+
+        app.get('/favicon.ico', (req, res) => {
+            res.status(200).sendFile(path.resolve('favicon.ico'));
+        });
+
+        app.get('/*', (req, res) => {
+            log.debug(__filename, req.path, 'Invalid path in URL.');
+            res.status(404).sendFile(path.resolve('views/index.html'));
+        });
     });
-    return maze;
-}
-
-
-// mongo info
-// database-admin-password: 4jGJLSQryS30aRhs
-// database-name: sampledb
-// database-password: cc2018-mdbpw
-// database-user: mdbuser
-
-
+});

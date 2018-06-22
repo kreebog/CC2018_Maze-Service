@@ -26,7 +26,6 @@ class Maze {
         this.seed = '';
         this.textRender = '';
         this.id = '';
-        this.version = 0;
         // don't let the maze get too big or the server will run out of memory during generation
         this.MAX_CELL_COUNT = 2500;
     }
@@ -39,7 +38,6 @@ class Maze {
         this.seed = obj.seed;
         this.textRender = obj.textRender;
         this.id = obj.id;
-        this.version = obj.version;
         return this;
     }
     getSeed() {
@@ -54,9 +52,6 @@ class Maze {
     getId() {
         return this.id;
     }
-    getVersion() {
-        return this.version;
-    }
     getMaxCellCount() {
         return this.MAX_CELL_COUNT;
     }
@@ -66,28 +61,33 @@ class Maze {
      * @param width - The width of the maze grid
      * @param seed - PRNG seed value.  If empty, maze will be random and unrepeatable
      */
-    generate(height, width, seed, version) {
+    generate(height, width, seed) {
         if (this.cells.length > 0) {
             log.warn(__filename, 'generate()', 'This maze has already been generated.');
             return this;
         }
         log.info(__filename, 'generate()', util_1.default.format('Generating new %d (height) x %d (width) maze with seed "%s"', height, width, seed));
         startGenTime = Date.now();
+        // validate height and width and collect errors
+        let errors = new Array();
+        if (isNaN(height))
+            throw new Error('Height must be numeric.');
+        if (isNaN(width))
+            throw new Error('Width must be numeric.');
         // set the dimensions
         this.height = height;
         this.width = width;
-        this.version = version;
         // check for size constraint
         if (height * width > this.MAX_CELL_COUNT) {
-            throw util_1.default.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', this.MAX_CELL_COUNT, height, width, (height * width));
+            throw new Error(util_1.default.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', this.MAX_CELL_COUNT, height, width, (height * width)));
         }
         // implement random seed
         if (seed && seed.length > 0) {
             this.seed = seed;
             seedrandom_1.default(seed, { global: true });
         }
-        // set version and ID
-        this.id = util_1.default.format('%d:%d:%s:%d', this.height, this.width, this.seed, this.version);
+        // set maze's ID
+        this.id = util_1.default.format('%d:%d:%s', this.height, this.width, this.seed);
         // build the empty cells array
         this.cells = new Array(height);
         for (let y = 0; y < height; y++) {

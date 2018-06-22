@@ -67,6 +67,25 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
             });
         });
 
+        app.get('/list', (req, res) => {
+            let cursor = col.find({}).toArray( (err, docs) => {
+                if (err) {
+                    log.error(__filename, req.path, JSON.stringify(err));
+                    res.status(500).send('Unable to complete request.');
+                }
+
+                let ret = '<table><th>Seed</th><th>Height</th><th>width</th>\n';
+
+                docs.forEach(doc => {
+                    let maze = new Maze().loadFromJSON(JSON.stringify(doc));
+                    ret += format('<tr><td>%s</td><td>%d</td><td>%d</td>\n', maze.getSeed(), maze.getHeight(), maze.getWidth());
+                });
+
+                ret += '</table>\n';
+                res.status(200).send(ret);
+            });
+        });
+
         app.get('/favicon.ico', (req, res) => {
             res.status(200).sendFile(path.resolve('favicon.ico'));
         });

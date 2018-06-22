@@ -60,32 +60,57 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
                 }
                 // if no match found, generate a new maze from the given values
                 if (docs.length == 0) {
-                    log.debug(__filename, req.path, util_1.format('Maze "%s" not found.  Generating...', mazeId));
-                    // error handling and input checks are in the Maze class - descriptive error will be returned 
-                    try {
-                        let maze = new Maze_1.Maze().generate(req.params.height, req.params.width, req.params.seed);
-                        log.debug(__filename, req.path, util_1.format('Maze "%s" generated.  Storing...', mazeId));
-                        col.insert(maze);
-                        log.debug(__filename, req.path, util_1.format('Returning Maze "%s" as JSON...', mazeId));
-                        res.status(200).send(JSON.stringify(maze));
-                    }
-                    catch (error) {
-                        log.error(__filename, req.path, util_1.format('Error during maze generation: %s', error.message));
-                        res.render('error', {
-                            responseCode: 500,
-                            endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                            sample: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
-                            errMsg: error.message
-                        });
-                    }
+                    log.debug(__filename, req.path, util_1.format('Maze "%s" not found.', mazeId));
+                    res.status(404).send({ 'status': util_1.format('Maze "%s" not found.', mazeId) });
                 }
                 else {
                     // match was found in the database return it as json
-                    log.debug(__filename, req.path, util_1.format('Maze "%s" found in DB, return as JSON...', mazeId));
+                    log.debug(__filename, req.path, util_1.format('Maze "%s" found, return as JSON...', mazeId));
                     // TODO: Marshalling to and from Maze type is not needed here
                     // Leaving it for now as an example, as it may be useful elsewhere
                     let lMaze = new Maze_1.Maze().loadFromJSON(JSON.stringify(docs[0]));
                     res.status(200).send(JSON.stringify(docs[0]));
+                }
+            });
+        });
+        // gets maze with the given id (combination of height:width:seed)
+        app.get('/generate/:height/:width/:seed', (req, res) => {
+            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+            // search the collection for a maze with the right id
+            let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
+                if (err) {
+                    log.error(__filename, req.path, JSON.stringify(err));
+                    res.render('error', {
+                        responseCode: 500,
+                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
+                        sample: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
+                        errName: err.name,
+                        errMsg: err.message
+                    });
+                }
+                // warn if there are duplicates - we'll only work with the first record found
+                if (docs.length > 1) {
+                    log.warn(__filename, req.path, util_1.format('%d mazes found with id "%s", returning first match.', docs.length, mazeId));
+                    res.status(400).send({ 'status': util_1.format('Maze "%s" already exists.', mazeId) });
+                }
+                // if no match found, generate a new maze from the given values
+                log.debug(__filename, req.path, util_1.format('Generating maze "%s"...', mazeId));
+                // error handling and input checks are in the Maze class - descriptive error will be returned 
+                try {
+                    let maze = new Maze_1.Maze().generate(req.params.height, req.params.width, req.params.seed);
+                    log.debug(__filename, req.path, util_1.format('Maze "%s" generated.  Storing...', mazeId));
+                    col.insert(maze);
+                    log.debug(__filename, req.path, util_1.format('Returning Maze "%s" as JSON...', mazeId));
+                    res.status(200).send(JSON.stringify(maze));
+                }
+                catch (error) {
+                    log.error(__filename, req.path, util_1.format('Error during maze generation: %s', error.message));
+                    res.render('error', {
+                        responseCode: 500,
+                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
+                        sample: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
+                        errMsg: error.message
+                    });
                 }
             });
         });
@@ -100,7 +125,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
                     res.render('error', {
                         responseCode: 500,
                         endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
+                        sample: util_1.format('http://%s/list', req.headers.host),
                         errName: err.name,
                         errMsg: err.message
                     });
@@ -122,7 +147,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
                     res.render('error', {
                         responseCode: 500,
                         endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
+                        sample: util_1.format('http://%s/view/10/15/SimpleSample', req.headers.host),
                         errName: err.name,
                         errMsg: err.message
                     });
@@ -132,6 +157,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
                 }
                 if (docs.length == 0) {
                     log.debug(__filename, req.path, util_1.format('No maze with id %s found.', mazeId));
+                    res.status(404).send({ 'status': util_1.format('Maze "%s%" not found.', mazeId) });
                 }
                 else {
                     log.debug(__filename, req.path, util_1.format('Maze "%s" found in DB, viewing...', mazeId));
@@ -140,6 +166,28 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
                         maze: docs[0]
                     });
                 }
+            });
+        });
+        /**
+         * Deletes maze documents with matching ID
+         */
+        app.get('/delete/:height/:width/:seed', (req, res) => {
+            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+            // delete the first document with the matching mazeId
+            col.deleteOne({ id: mazeId }, function (err, results) {
+                if (err) {
+                    log.error(__filename, req.path, JSON.stringify(err));
+                    res.render('error', {
+                        responseCode: 500,
+                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
+                        sample: util_1.format('http://%s/view/10/15/SimpleSample', req.headers.host),
+                        errName: err.name,
+                        errMsg: err.message
+                    });
+                }
+                // send the result code with deleted doc count
+                res.status(200).send({ 'deleted_count': results.deletedCount });
+                log.debug(__filename, req.path, util_1.format('%d document(s) deleted', results.deletedCount));
             });
         });
         /**

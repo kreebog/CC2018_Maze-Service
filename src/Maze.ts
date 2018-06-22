@@ -7,6 +7,7 @@ import Cell from './Cell';
 let carveDepth = 0;     // tracks the level of recursion during path carving
 let maxCarveDepth = 0;  // tracks the deepest level of carve recursion seen 
 let startGenTime = 0;   // used to determine time spent generating a maze
+const MAX_CELL_COUNT = 2500;
 
 export class Maze {
     private cells: Array<Array<Cell>> = new Array();
@@ -17,7 +18,6 @@ export class Maze {
     private id:string = '';
 
     // don't let the maze get too big or the server will run out of memory during generation
-    private MAX_CELL_COUNT = 2500;
     
     constructor() {
     }
@@ -52,10 +52,6 @@ export class Maze {
         return this.id;
     }
 
-    public getMaxCellCount(): number {
-        return this.MAX_CELL_COUNT;
-    }
-
     /**
      * Generates a new maze based on the given parameters
      * @param height - The height of the maze grid
@@ -81,8 +77,8 @@ export class Maze {
         this.width = width;
 
         // check for size constraint
-        if (height * width > this.MAX_CELL_COUNT) {
-            throw new Error(util.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', this.MAX_CELL_COUNT, height, width, (height * width)));
+        if (height * width > MAX_CELL_COUNT) {
+            throw new Error(util.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', MAX_CELL_COUNT, height, width, (height * width)));
         }
 
         // implement random seed

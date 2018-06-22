@@ -18,7 +18,9 @@ const Cell_1 = __importDefault(require("./Cell"));
 let carveDepth = 0; // tracks the level of recursion during path carving
 let maxCarveDepth = 0; // tracks the deepest level of carve recursion seen 
 let startGenTime = 0; // used to determine time spent generating a maze
+const MAX_CELL_COUNT = 2500;
 class Maze {
+    // don't let the maze get too big or the server will run out of memory during generation
     constructor() {
         this.cells = new Array();
         this.height = 0;
@@ -26,8 +28,6 @@ class Maze {
         this.seed = '';
         this.textRender = '';
         this.id = '';
-        // don't let the maze get too big or the server will run out of memory during generation
-        this.MAX_CELL_COUNT = 2500;
     }
     // loads object from values given in json string
     loadFromJSON(jsonMaze) {
@@ -52,9 +52,6 @@ class Maze {
     getId() {
         return this.id;
     }
-    getMaxCellCount() {
-        return this.MAX_CELL_COUNT;
-    }
     /**
      * Generates a new maze based on the given parameters
      * @param height - The height of the maze grid
@@ -78,8 +75,8 @@ class Maze {
         this.height = height;
         this.width = width;
         // check for size constraint
-        if (height * width > this.MAX_CELL_COUNT) {
-            throw new Error(util_1.default.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', this.MAX_CELL_COUNT, height, width, (height * width)));
+        if (height * width > MAX_CELL_COUNT) {
+            throw new Error(util_1.default.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', MAX_CELL_COUNT, height, width, (height * width)));
         }
         // implement random seed
         if (seed && seed.length > 0) {

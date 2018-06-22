@@ -74,15 +74,16 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
                     res.status(500).send('Unable to complete request.');
                 }
 
-                let ret = '<table><th>Seed</th><th>Height</th><th>width</th>\n';
+                let style = '<style>table, th, td {padding: 15px; border: 1px solid black; border-collapse: collapse; text-align: center}</style>\n';
+                let html = '<table><th>Seed</th><th>Height</th><th>Width</th>\n';
 
                 docs.forEach(doc => {
                     let maze = new Maze().loadFromJSON(JSON.stringify(doc));
-                    ret += format('<tr><td>%s</td><td>%d</td><td>%d</td>\n', maze.getSeed(), maze.getHeight(), maze.getWidth());
+                    html += format('<tr><td align="center">%s</td><td>%d</td><td>%d</td>\n', maze.getSeed(), maze.getHeight(), maze.getWidth());
                 });
 
-                ret += '</table>\n';
-                res.status(200).send(ret);
+                html += '</table>\n';
+                res.status(200).send(style + html);
             });
         });
 

@@ -23,6 +23,8 @@ html(lang='en')
                                     td= maze.seed
                                     td
                                         a(href='/view/' + maze.height + '/' + maze.width + '/' + maze.seed) view
+                                        | &nbsp;|&nbsp;
+                                        a(href='/get/' + maze.height + '/' + maze.width + '/' + maze.seed) json
                     else
                         h3 No mazes found in the database.
 

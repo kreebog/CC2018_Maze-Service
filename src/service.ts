@@ -19,7 +19,6 @@ app.set('view engine', 'pug');
 // configure modules
 log.setLogLevel(log.LOG_LEVELS.DEBUG);
 
-
 // only start the web service after connecting to the database
 MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
     if (err) {

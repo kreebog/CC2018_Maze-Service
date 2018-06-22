@@ -20,7 +20,7 @@ const mongodb_1 = require("mongodb");
 const DB_URL = 'mongodb+srv://mdbuser:cc2018-mdbpw@cluster0-bxvkt.mongodb.net/';
 const DB_NAME = 'cc2018';
 const COL_NAME = 'mazes';
-const APP_PORT = 3000;
+const APP_PORT = 8080;
 // constant object references
 const app = express_1.default();
 // configure modules

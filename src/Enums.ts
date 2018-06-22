@@ -9,7 +9,7 @@ export enum DIRS {
 }
 
 /**
- * Tags for cells, avatar, item, and other functions
+ * Tags for cells, avatar, item, and other functions 
  */
 export enum TAGS { 
     START = 1,

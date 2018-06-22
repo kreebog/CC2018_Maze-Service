@@ -1,0 +1,15 @@
+doctype html
+html(lang='en')
+    head
+        title Maze Service - API Error
+        body
+            h1 Maze Generator Service - HTTP Error ##{responseCode}
+            h3 Bad Request
+            li #{endpoint}
+            h3 Sample Request
+            li #{sample}
+            h3 Error Details
+            p The server could not complete your request.
+            ul
+                li= errMsg
+

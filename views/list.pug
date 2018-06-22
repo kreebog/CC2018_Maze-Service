@@ -1,0 +1,31 @@
+doctype html
+html(lang='en')
+    head
+        style
+            include style.css
+        title Maze Service - List
+        body
+            h1 Maze Generator Service - List of Stored Mazes 
+            div The following is a list of all mazes currently stored in the database, with associated actions.
+            br
+            div
+                #mazes
+                    if mazes.length > 0
+                        table
+                            th Height
+                            th Width
+                            th Seed
+                            th Actions
+                            each maze in mazes
+                                tr
+                                    td= maze.height
+                                    td= maze.width
+                                    td= maze.seed
+                                    td
+                                        a(href='/view/' + maze.height + '/' + maze.width + '/' + maze.seed) view
+                                        | &nbsp;|&nbsp;
+                                        a(href='/get/' + maze.height + '/' + maze.width + '/' + maze.seed) json
+                    else
+                        h3 No mazes found in the database.
+
+                        

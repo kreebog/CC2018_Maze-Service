@@ -27,7 +27,6 @@ app.set('view engine', 'pug');
 log.setLogLevel((ENV == 'DVLP' ? log.LOG_LEVELS.DEBUG : log.LOG_LEVELS.INFO));
 log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + ENV);
 
-
 // only start the web service after connecting to the database
 log.info(__filename, SVC_NAME, 'Connecting to MongoDB: ' + DB_URL);
 MongoClient.connect(DB_URL, function(err, client) {

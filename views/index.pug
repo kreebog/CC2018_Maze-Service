@@ -1,20 +1,30 @@
 doctype html
 html
     head
+        style
+            include style.css
         title Maze Service - Page Not Found
     body
-        h3 Invalid Path
+        h1 Page Not Found
         hr
-        p The page you requested could not be found.  Please try again.
+        h3 The page you requested could not be found.  Please try again.
         p Sample Links: 
             ul  
                 li
+                    a(href=sampleGetAll) #{sampleGetAll}
+                    |&nbsp;- Returns a list of available mazes [JSON]
+                li
                     a(href=sampleGet) #{sampleGet}
+                    |&nbsp;- Returns a single maze [JSON]
                 li
                     a(href=sampleGenerate) #{sampleGenerate}
+                    |&nbsp;- Generates, stores, and returns a new maze [JSON]
                 li
                     a(href=sampleDelete) #{sampleDelete}
+                    |&nbsp;- Deletes a single maze with the given parameters [JSON]
                 li
                     a(href=sampleView) #{sampleView}
+                    |&nbsp;- View a single maze [HTML]
                 li 
                     a(href=sampleList) #{sampleList}
+                    |&nbsp;- Lists all mazes and provides handy links to functions [HTML]

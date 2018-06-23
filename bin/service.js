@@ -213,6 +213,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
             res.render('index', {
                 contentType: 'text/html',
                 responseCode: 404,
+                sampleGetAll: util_1.format('http://%s/get', req.headers.host),
                 sampleGet: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
                 sampleGenerate: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
                 sampleDelete: util_1.format('http://%s/delete/10/15/SimpleSample', req.headers.host),

@@ -46,13 +46,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
-                        errName: err.name,
-                        errMsg: err.message
-                    });
+                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // warn if there are duplicates - we'll only work with the first record found
                 if (docs.length > 1) {
@@ -80,13 +74,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
-                        errName: err.name,
-                        errMsg: err.message
-                    });
+                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // warn if there are duplicates - we'll only work with the first record found
                 if (docs.length > 1) {
@@ -105,12 +93,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
                 }
                 catch (error) {
                     log.error(__filename, req.path, util_1.format('Error during maze generation: %s', error.message));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
-                        errMsg: error.message
-                    });
+                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
             });
         });
@@ -122,13 +105,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             let cursor = col.find({}).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/list', req.headers.host),
-                        errName: err.name,
-                        errMsg: err.message
-                    });
+                    res.status(500).send({ 'status': util_1.format('Error getting all documents from "%s": %s', COL_NAME, err.message) });
                 }
                 res.render('list', {
                     responseCode: 200,
@@ -144,13 +121,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/view/10/15/SimpleSample', req.headers.host),
-                        errName: err.name,
-                        errMsg: err.message
-                    });
+                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 if (docs.length > 1) {
                     log.warn(__filename, req.path, util_1.format('%d mazes found with id "', docs.length, mazeId));
@@ -177,13 +148,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             col.deleteOne({ id: mazeId }, function (err, results) {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/view/10/15/SimpleSample', req.headers.host),
-                        errName: err.name,
-                        errMsg: err.message
-                    });
+                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // send the result code with deleted doc count
                 res.status(200).send({ 'deleted_count': results.deletedCount });

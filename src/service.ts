@@ -6,7 +6,6 @@ import * as log from './Logger';
 import express from 'express';
 import { Server } from 'http';
 import { MongoClient } from 'mongodb';
-import { WSAESHUTDOWN } from 'constants';
 
 // constant value references
 const DB_NAME = 'cc2018';

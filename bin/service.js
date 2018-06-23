@@ -126,7 +126,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 }
                 // warn if there are duplicates - we'll only work with the first record found
                 if (docs.length > 0) {
-                    log.warn(__filename, req.path, util_1.format('%d mazes found with id "%s", aborting.', docs.length, mazeId));
+                    log.warn(__filename, req.path, util_1.format('%d maze(s) found with id "%s", aborting.', docs.length, mazeId));
                     return res.status(400).json({ 'status': util_1.format('Maze "%s" already exists.', mazeId) });
                 }
                 // if no match found, generate a new maze from the given values

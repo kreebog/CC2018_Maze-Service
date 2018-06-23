@@ -1,38 +1,51 @@
+require('dotenv').config();
 import path from 'path';
 import { Maze } from './Maze'
 import { format } from 'util';
 import * as log from './Logger';
 import express from 'express';
+import { Server } from 'http';
 import { MongoClient } from 'mongodb';
+import { WSAESHUTDOWN } from 'constants';
 
 // constant value references
-const DB_URL = 'mongodb+srv://mdbuser:cc2018-mdbpw@cluster0-bxvkt.mongodb.net/';
 const DB_NAME = 'cc2018';
+const DB_URL = 'mongodb+srv://mdbuser:cc2018-mdbpw@cluster0-bxvkt.mongodb.net/';
 const COL_NAME = 'mazes';
-const APP_PORT = 8080;
+const ENV = process.env['NODE_ENV'] || 'PROD';
+const SVC_NAME = 'maze-service';
+const PORT = process.env.MAZE_SVC_PORT || 8080;
 
-// constant object references
+// create express references
 const app = express();
+let httpServer: Server; // will be set with app.listen
+let mongoDBClient: MongoClient; // set on successful connection to db
+
 app.set('views', 'views');
 app.set('view engine', 'pug');
 
-// configure modules
-log.setLogLevel(log.LOG_LEVELS.INFO);
+// set the logging level based on current env
+log.setLogLevel((ENV == 'DVLP' ? log.LOG_LEVELS.DEBUG : log.LOG_LEVELS.INFO));
+log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + ENV);
+
 
 // only start the web service after connecting to the database
-MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
+log.info(__filename, SVC_NAME, 'Connecting to MongoDB: ' + DB_URL);
+MongoClient.connect(DB_URL, function(err, client) {
     if (err) {
-        log.error(__filename, '', JSON.stringify(err));
+        log.error(__filename, SVC_NAME, format('Error connecting to %s:\n%s', DB_URL, JSON.stringify(err)));
         return err;
     }
+
+    mongoDBClient = client;
 
     // get the cc2018 database and the mazes collection
     let db = client.db(DB_NAME);
     let col = db.collection(COL_NAME);
 
     // all is well, listen for connections
-    app.listen(APP_PORT, function() {
-        log.info(__filename, '', format('Listening on port %d', APP_PORT));
+    httpServer = app.listen(PORT, function() {
+        log.info(__filename, SVC_NAME, 'Listening on port ' + PORT);
 
         // gets maze with the given id (combination of height:width:seed)
         app.get('/get/:height/:width/:seed', (req, res) => {
@@ -40,10 +53,10 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
             let mazeId = format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
 
             // search the collection for a maze with the right id
-            let cursor = col.find({id:mazeId}).toArray( (err, docs) => {
+            col.find({id:mazeId}).toArray( (err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res.status(500).send({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message)});
+                    return res.status(500).json({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message)});
                 }
 
                 // warn if there are duplicates - we'll only work with the first record found
@@ -54,7 +67,7 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
                 // if no match found, generate a new maze from the given values
                 if (docs.length == 0) {
                     log.debug(__filename, req.path, format('Maze "%s" not found.', mazeId));
-                    res.status(404).send({'status': format('Maze "%s" not found.', mazeId)});
+                    res.status(404).json({'status': format('Maze "%s" not found.', mazeId)});
                 } else {
                     // match was found in the database return it as json
                     log.debug(__filename, req.path, format('Maze "%s" found, return as JSON...', mazeId));
@@ -62,7 +75,43 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
                     // TODO: Marshalling to and from Maze type is not needed here
                     // Leaving it for now as an example, as it may be useful elsewhere
                     let lMaze = new Maze().loadFromJSON(JSON.stringify(docs[0]));
-                    res.status(200).send(JSON.stringify(docs[0]));
+                    res.status(200).json(JSON.stringify(docs[0]));
+                }
+            });
+        });
+
+        // gets all mazes
+        app.get('/get', (req, res) => {
+            // search the collection for a maze with the right id
+            col.find({}, {fields:{_id:0,id:1,height:1,width:1,seed:1}}).toArray( (err, docs) => {
+                if (err) {
+                    log.error(__filename, req.path, JSON.stringify(err));
+                    return res.status(500).json({'status':format('Error finding getting mazes from "%s": %s', COL_NAME, err.message)});
+                }
+
+                // if no match found, generate a new maze from the given values
+                if (docs.length == 0) {
+                    log.debug(__filename, req.path, format('No mazes foundin collectoin ""', COL_NAME));
+                    res.status(404).json({'status': format('No mazes foundin collectoin ""', COL_NAME)});
+                } else {
+                    // match was found in the database return it as json
+                    log.debug(__filename, req.path, format('%d mazes found in "%s", returning JSON ...', docs.length, COL_NAME));
+                    
+                    // cosntruct an array with key maze properties and a get url
+                    let mazes = new Array();
+                    docs.forEach(doc => {
+                        let stub = {
+                            'id': doc.id, 
+                            'height': doc.height, 
+                            'width': doc.width, 
+                            'seed': doc.seed, 
+                            'url': format('http://%s/get/%d/%d/%s', req.headers.host, doc.height, doc.width, doc.seed)};
+
+                        mazes.push(stub);
+                    });
+
+                    // send the json data
+                    res.status(200).json(JSON.stringify(mazes));
                 }
             });
         });
@@ -73,16 +122,16 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
             let mazeId = format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
 
             // search the collection for a maze with the right id
-            let cursor = col.find({id:mazeId}).toArray( (err, docs) => {
+            col.find({id:mazeId}).toArray( (err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res.status(500).send({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message)});
+                    return res.status(500).json({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message)});
                 }
 
                 // warn if there are duplicates - we'll only work with the first record found
                 if (docs.length > 0) {
                     log.warn(__filename, req.path, format('%d mazes found with id "%s", aborting.', docs.length, mazeId));
-                    return res.status(400).send({'status': format('Maze "%s" already exists.', mazeId)});
+                    return res.status(400).json({'status': format('Maze "%s" already exists.', mazeId)});
                 }
 
                 // if no match found, generate a new maze from the given values
@@ -98,7 +147,7 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
                     res.status(200).send(JSON.stringify(maze));
                 } catch (error) {
                     log.error(__filename, req.path, format('Error during maze generation: %s', error.message));
-                    res.status(500).send({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, error.message)});
+                    res.status(500).json({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, error.message)});
                 }
             });
         });
@@ -108,13 +157,14 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
          * TODO: Page this?  It might get long...
          */
         app.get('/list', (req, res) => {
-            let cursor = col.find({}).toArray( (err, docs) => {
+            col.find({}).toArray( (err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res.status(500).send({'status':format('Error getting all documents from "%s": %s', COL_NAME, err.message)});
+                    return res.status(500).json({'status':format('Error getting all documents from "%s": %s', COL_NAME, err.message)});
                 }
 
                 res.render('list', {
+                    contentType: 'text/html',
                     responseCode: 200,
                     mazes: docs
                 });
@@ -128,10 +178,10 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
 
             let mazeId = format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
             
-            let cursor = col.find({id:mazeId}).toArray( (err, docs) => {
+            col.find({id:mazeId}).toArray( (err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res.status(500).send({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message)});
+                    return res.status(500).json({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message)});
                 }
 
                 if (docs.length > 1) {
@@ -140,11 +190,11 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
 
                 if (docs.length == 0) {
                     log.debug(__filename, req.path, format('No maze with id %s found.', mazeId));
-                    return res.status(404).send({'status': format('Maze "%s%" not found.', mazeId)});
+                    return res.status(404).json({'status': format('Maze "%s%" not found.', mazeId)});
                 } else {
                     log.debug(__filename, req.path, format('Maze "%s" found in DB, viewing...', mazeId));
-                    res.render('view', {
-                        responseCode: 200,
+                    res.status(200).render('view', {
+                        contentType: 'text/html',
                         maze: docs[0]
                     });
                 }
@@ -162,11 +212,11 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
             col.deleteOne({id: mazeId}, function (err, results) {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res.status(500).send({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message)});
+                    return res.status(500).json({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message)});
                 }
 
                 // send the result code with deleted doc count
-                res.status(200).send({'deleted_count': results.deletedCount});
+                res.status(200).json({'deleted_count': results.deletedCount});
                 log.info(__filename, req.path, format('%d document(s) deleted', results.deletedCount));
                 
             });
@@ -176,6 +226,7 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
          * Handle favicon requests - using the BCBST favicon.ico
          */
         app.get('/favicon.ico', (req, res) => {
+            res.setHeader('Content-Type', 'image/x-icon');
             res.status(200).sendFile(path.resolve('views/favicon.ico'));
         });
 
@@ -184,14 +235,45 @@ MongoClient.connect(DB_URL + DB_NAME, function(err, client) {
          */
         app.get('/*', (req, res) => {
             log.debug(__filename, req.path, 'Invalid path in URL.');
+            res.setHeader('Content-Type', 'text/html');
             res.render('index', {
+                contentType: 'text/html',
                 responseCode: 404,
-                sampleGet: format('http://%s/GET/10/15/SimpleSample', req.headers.host),
-                sampleGenerate: format('http://%s/GENERATE/10/15/SimpleSample', req.headers.host),
-                sampleDelete: format('http://%s/DELETE/10/15/SimpleSample', req.headers.host),
-                sampleView: format('http://%s/VIEW/10/15/SimpleSample', req.headers.host),
-                sampleList: format('http://%s/LIST', req.headers.host),
+                sampleGet: format('http://%s/get/10/15/SimpleSample', req.headers.host),
+                sampleGenerate: format('http://%s/generate/10/15/SimpleSample', req.headers.host),
+                sampleDelete: format('http://%s/delete/10/15/SimpleSample', req.headers.host),
+                sampleView: format('http://%s/view/10/15/SimpleSample', req.headers.host),
+                sampleList: format('http://%s/list', req.headers.host),
             });
         });
     });
 });
+
+/**
+ * Watch for SIGINT (process interrupt signal) and trigger shutdown
+ */
+process.on('SIGINT', function onSigInt () {
+    // all done, close the db connection
+    log.info(__filename, 'onSigInt()', 'Got SIGINT - Exiting applicaton...');
+    doShutdown()
+  });
+
+/**
+ * Watch for SIGTERM (process terminate signal) and trigger shutdown
+ */
+process.on('SIGTERM', function onSigTerm () {
+    // all done, close the db connection
+    log.info(__filename, 'onSigTerm()', 'Got SIGTERM - Exiting applicaton...');
+    doShutdown()
+  });
+
+/**
+ * Gracefully shut down the service
+ */
+function doShutdown() {
+    log.info(__filename, 'doShutDown()', 'Closing HTTP Server connections...');
+    httpServer.close();
+
+    log.info(__filename, 'doShutDown()', 'Closing Database connections...');
+    mongoDBClient.close();
+}

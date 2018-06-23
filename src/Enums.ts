@@ -18,6 +18,16 @@ export enum TAGS {
     CARVED = 8
 }
 
+// enumeration of possible game results
+export enum GAME_RESULTS {
+    WIN = 0,
+    OUT_OF_MOVES,
+    OUT_OF_TIME,
+    DEATH_TRAP,
+    DEATH_POISON
+}
+
+
 /**
  * Returns comma-delimited string of the selected (bitwise) values within 
  * the given enumeration.  

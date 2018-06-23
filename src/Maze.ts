@@ -1,4 +1,4 @@
-import util from 'util';
+import { format } from 'util';
 import seedrandom from 'seedrandom';
 import * as log from './Logger';
 import * as Enums from './Enums';
@@ -64,7 +64,7 @@ export class Maze {
             return this;
         } 
 
-        log.info(__filename, 'generate()', util.format('Generating new %d (height) x %d (width) maze with seed "%s"', height, width, seed));
+        log.info(__filename, 'generate()', format('Generating new %d (height) x %d (width) maze with seed "%s"', height, width, seed));
         startGenTime = Date.now();
 
         // validate height and width and collect errors
@@ -78,7 +78,7 @@ export class Maze {
 
         // check for size constraint
         if (height * width > MAX_CELL_COUNT) {
-            throw new Error(util.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', MAX_CELL_COUNT, height, width, (height * width)));
+            throw new Error(format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', MAX_CELL_COUNT, height, width, (height * width)));
         }
 
         // implement random seed
@@ -88,7 +88,7 @@ export class Maze {
         }
 
         // set maze's ID
-        this.id = util.format('%d:%d:%s', this.height, this.width, this.seed);
+        this.id = format('%d:%d:%s', this.height, this.width, this.seed);
 
         // build the empty cells array
         this.cells = new Array(height);
@@ -104,12 +104,12 @@ export class Maze {
 
         }
 
-        log.debug(__filename, 'generate()', util.format('Generated [%d][%d] grid of %d empty cells.', height, width, (height * width)));
+        log.debug(__filename, 'generate()', format('Generated [%d][%d] grid of %d empty cells.', height, width, (height * width)));
         
         // randomize start and finish locations
         let startCol: number = Math.floor(Math.random() * width);
         let finishCol: number = Math.floor(Math.random() * width);
-        log.debug(__filename, 'generate()', util.format('Adding START ([%d][%d]) and FINISH ([%d][%d]) cells.', 0, startCol, height - 1, finishCol));
+        log.debug(__filename, 'generate()', format('Adding START ([%d][%d]) and FINISH ([%d][%d]) cells.', 0, startCol, height - 1, finishCol));
 
         // tag start and finish columns (start / finish tags force matching exits on edge)
         this.cells[0][startCol].addTag(Enums.TAGS.START);
@@ -121,13 +121,13 @@ export class Maze {
         // render the maze so the text rendering is set
         this.render();
 
-        log.info(__filename, 'generate()', util.format('Generation Complete: Time=%dms, Recursion=%d, MazeID=%s', (Date.now() - startGenTime), maxCarveDepth, this.getId())); 
+        log.info(__filename, 'generate()', format('Generation Complete: Time=%dms, Recursion=%d, MazeID=%s', (Date.now() - startGenTime), maxCarveDepth, this.getId())); 
         return this;
     }
 
     private carvePassage(cell: Cell) {
         carveDepth++;
-        log.debug(__filename, 'carvePassage()', util.format('Recursion: %d. Carving STARTED for cell [%d][%d].', carveDepth, cell.getLocation().y, cell.getLocation().x));
+        log.debug(__filename, 'carvePassage()', format('Recursion: %d. Carving STARTED for cell [%d][%d].', carveDepth, cell.getLocation().y, cell.getLocation().x));
 
         // randomly sort an array of bitwise directional values (see also: Enums.Dirs)
         let dirs = [1, 2, 4, 8].sort(function(a, b){ return 0.5 - Math.random()});
@@ -157,7 +157,7 @@ export class Maze {
                 }
             } catch {
                 // somehow still grabbed an invalid cell
-                log.error(__filename, 'carvePassage()', util.format('Error getting cell [%d][%d].', ny, nx));
+                log.error(__filename, 'carvePassage()', format('Error getting cell [%d][%d].', ny, nx));
             }
         } 
 
@@ -168,7 +168,7 @@ export class Maze {
         
         // exiting the function relieves one level of recursion
         carveDepth--;
-        log.trace(__filename, 'carvePassage()', util.format('Recursion: %d. Carve COMPLETED for cell [%d][%d].', carveDepth, cell.getLocation().y, cell.getLocation().x));
+        log.trace(__filename, 'carvePassage()', format('Recursion: %d. Carve COMPLETED for cell [%d][%d].', carveDepth, cell.getLocation().y, cell.getLocation().x));
     }
 
     /**

@@ -47,9 +47,9 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
     // all is well, listen for connections
     httpServer = app.listen(PORT, function () {
         log.info(__filename, SVC_NAME, 'Listening on port ' + PORT);
-        // gets maze with the given id (combination of height:width:seed)
-        app.get('/get/:height/:width/:seed', (req, res) => {
-            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+        // accepts MazeID (string concatenation of Height:Width:Seed)
+        app.get('/get/:mazeId', (req, res) => {
+            let mazeId = req.params.mazeId;
             // search the collection for a maze with the right id
             col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
@@ -74,6 +74,13 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                     res.status(200).json(JSON.stringify(docs[0]));
                 }
             });
+        });
+        // Left in for backward compatibility, builds mazeId from original /get/h/w/seed format and redirects 
+        // to new /get/mazeId route
+        app.get('/get/:height/:width/:seed', (req, res) => {
+            log.debug(__filename, req.path, 'Deprecated route - redirecting to /get/mazeId...');
+            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+            return res.redirect('/get/' + mazeId);
         });
         // gets all mazes
         app.get('/get', (req, res) => {
@@ -158,8 +165,8 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
         /**
          * Renders a simple view of the maze
          */
-        app.get('/view/:height/:width/:seed', (req, res) => {
-            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+        app.get('/view/:mazeId', (req, res) => {
+            let mazeId = req.params.mazeId;
             col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
@@ -184,8 +191,8 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
         /**
          * Deletes maze documents with matching ID
          */
-        app.get('/delete/:height/:width/:seed', (req, res) => {
-            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+        app.get('/delete/:mazeId', (req, res) => {
+            let mazeId = req.params.mazeId;
             // delete the first document with the matching mazeId
             col.deleteOne({ id: mazeId }, function (err, results) {
                 if (err) {
@@ -214,10 +221,10 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 contentType: 'text/html',
                 responseCode: 404,
                 sampleGetAll: util_1.format('http://%s/get', req.headers.host),
-                sampleGet: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
+                sampleGet: util_1.format('http://%s/get/10:15:SimpleSample', req.headers.host),
                 sampleGenerate: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
-                sampleDelete: util_1.format('http://%s/delete/10/15/SimpleSample', req.headers.host),
-                sampleView: util_1.format('http://%s/view/10/15/SimpleSample', req.headers.host),
+                sampleDelete: util_1.format('http://%s/delete/10:15:SimpleSample', req.headers.host),
+                sampleView: util_1.format('http://%s/view/10:15:SimpleSample', req.headers.host),
                 sampleList: util_1.format('http://%s/list', req.headers.host),
             });
         });

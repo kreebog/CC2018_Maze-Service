@@ -26,7 +26,7 @@ const app = express_1.default();
 app.set('views', 'views');
 app.set('view engine', 'pug');
 // configure modules
-log.setLogLevel(log.LOG_LEVELS.DEBUG);
+log.setLogLevel(log.LOG_LEVELS.INFO);
 // only start the web service after connecting to the database
 mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
     if (err) {
@@ -46,7 +46,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    return res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // warn if there are duplicates - we'll only work with the first record found
                 if (docs.length > 1) {
@@ -74,12 +74,12 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    return res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // warn if there are duplicates - we'll only work with the first record found
-                if (docs.length > 1) {
-                    log.warn(__filename, req.path, util_1.format('%d mazes found with id "%s", returning first match.', docs.length, mazeId));
-                    res.status(400).send({ 'status': util_1.format('Maze "%s" already exists.', mazeId) });
+                if (docs.length > 0) {
+                    log.warn(__filename, req.path, util_1.format('%d mazes found with id "%s", aborting.', docs.length, mazeId));
+                    return res.status(400).send({ 'status': util_1.format('Maze "%s" already exists.', mazeId) });
                 }
                 // if no match found, generate a new maze from the given values
                 log.debug(__filename, req.path, util_1.format('Generating maze "%s"...', mazeId));
@@ -93,7 +93,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
                 }
                 catch (error) {
                     log.error(__filename, req.path, util_1.format('Error during maze generation: %s', error.message));
-                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, error.message) });
                 }
             });
         });
@@ -105,7 +105,7 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             let cursor = col.find({}).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.status(500).send({ 'status': util_1.format('Error getting all documents from "%s": %s', COL_NAME, err.message) });
+                    return res.status(500).send({ 'status': util_1.format('Error getting all documents from "%s": %s', COL_NAME, err.message) });
                 }
                 res.render('list', {
                     responseCode: 200,
@@ -121,14 +121,14 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    return res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 if (docs.length > 1) {
                     log.warn(__filename, req.path, util_1.format('%d mazes found with id "', docs.length, mazeId));
                 }
                 if (docs.length == 0) {
                     log.debug(__filename, req.path, util_1.format('No maze with id %s found.', mazeId));
-                    res.status(404).send({ 'status': util_1.format('Maze "%s%" not found.', mazeId) });
+                    return res.status(404).send({ 'status': util_1.format('Maze "%s%" not found.', mazeId) });
                 }
                 else {
                     log.debug(__filename, req.path, util_1.format('Maze "%s" found in DB, viewing...', mazeId));
@@ -148,11 +148,11 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             col.deleteOne({ id: mazeId }, function (err, results) {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    return res.status(500).send({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // send the result code with deleted doc count
                 res.status(200).send({ 'deleted_count': results.deletedCount });
-                log.debug(__filename, req.path, util_1.format('%d document(s) deleted', results.deletedCount));
+                log.info(__filename, req.path, util_1.format('%d document(s) deleted', results.deletedCount));
             });
         });
         /**
@@ -168,10 +168,11 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
             log.debug(__filename, req.path, 'Invalid path in URL.');
             res.render('index', {
                 responseCode: 404,
-                endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                sampleGet: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
-                sampleView: util_1.format('http://%s/view/10/15/SimpleSample', req.headers.host),
-                sampleList: util_1.format('http://%s/list', req.headers.host),
+                sampleGet: util_1.format('http://%s/GET/10/15/SimpleSample', req.headers.host),
+                sampleGenerate: util_1.format('http://%s/GENERATE/10/15/SimpleSample', req.headers.host),
+                sampleDelete: util_1.format('http://%s/DELETE/10/15/SimpleSample', req.headers.host),
+                sampleView: util_1.format('http://%s/VIEW/10/15/SimpleSample', req.headers.host),
+                sampleList: util_1.format('http://%s/LIST', req.headers.host),
             });
         });
     });

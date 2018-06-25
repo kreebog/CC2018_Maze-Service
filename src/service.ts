@@ -8,10 +8,10 @@ import { Server } from 'http';
 import { MongoClient } from 'mongodb';
 
 // constant value references
-const DB_NAME = 'cc2018';
-const DB_URL = 'mongodb+srv://mdbuser:cc2018-mdbpw@cluster0-bxvkt.mongodb.net/';
-const COL_NAME = 'mazes';
 const ENV = process.env['NODE_ENV'] || 'PROD';
+const DB_NAME = 'cc2018';
+const DB_URL = format('http://%s:%s@%s/', process.env['DB_USER'], process.env['DB_PASS'], process.env['DB_URL']);
+const COL_NAME = 'mazes';
 const SVC_NAME = 'maze-service';
 const PORT = process.env.MAZE_SVC_PORT || 8080;
 

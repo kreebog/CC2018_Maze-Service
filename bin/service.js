@@ -21,10 +21,10 @@ const mongodb_1 = require("mongodb");
 const ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
 const DB_URL = util_1.format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
+const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
 // general constant values
 const COL_NAME = 'mazes';
 const SVC_NAME = 'maze-service';
-const PORT = process.env.MAZE_SVC_PORT || 8080;
 // create express references
 const app = express_1.default();
 let httpServer; // will be set with app.listen
@@ -47,8 +47,8 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
     let db = client.db(DB_NAME);
     let col = db.collection(COL_NAME);
     // all is well, listen for connections
-    httpServer = app.listen(PORT, function () {
-        log.info(__filename, SVC_NAME, 'Listening on port ' + PORT);
+    httpServer = app.listen(SVC_PORT, function () {
+        log.info(__filename, SVC_NAME, 'Listening on port ' + SVC_PORT);
         // accepts MazeID (string concatenation of Height:Width:Seed)
         app.get('/get/:mazeId', (req, res) => {
             let mazeId = req.params.mazeId;

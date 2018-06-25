@@ -7,10 +7,12 @@ import express from 'express';
 import { Server } from 'http';
 import { MongoClient } from 'mongodb';
 
-// constant value references
+// constants from environment variables (or .env file)
 const ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
-const DB_URL = format('http://%s:%s@%s/', process.env['DB_USER'], process.env['DB_PASS'], process.env['DB_URL']);
+const DB_URL = format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
+
+// general constant values
 const COL_NAME = 'mazes';
 const SVC_NAME = 'maze-service';
 const PORT = process.env.MAZE_SVC_PORT || 8080;

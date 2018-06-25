@@ -20,6 +20,7 @@ const app = express();
 let httpServer: Server; // will be set with app.listen
 let mongoDBClient: MongoClient; // set on successful connection to db
 
+// configure pug
 app.set('views', 'views');
 app.set('view engine', 'pug');
 
@@ -222,7 +223,7 @@ MongoClient.connect(DB_URL, function(err, client) {
                 }
 
                 // send the result code with deleted doc count
-                res.status(200).json({'deleted_count': results.deletedCount});
+                res.status(200).json({'status': 'ok', 'count': results.deletedCount});
                 log.info(__filename, req.path, format('%d document(s) deleted', results.deletedCount));
                 
             });

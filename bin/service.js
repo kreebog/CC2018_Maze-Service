@@ -28,6 +28,7 @@ const PORT = process.env.MAZE_SVC_PORT || 8080;
 const app = express_1.default();
 let httpServer; // will be set with app.listen
 let mongoDBClient; // set on successful connection to db
+// configure pug
 app.set('views', 'views');
 app.set('view engine', 'pug');
 // set the logging level based on current env
@@ -200,7 +201,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                     return res.status(500).json({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // send the result code with deleted doc count
-                res.status(200).json({ 'deleted_count': results.deletedCount });
+                res.status(200).json({ 'status': 'ok', 'count': results.deletedCount });
                 log.info(__filename, req.path, util_1.format('%d document(s) deleted', results.deletedCount));
             });
         });

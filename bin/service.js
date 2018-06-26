@@ -68,7 +68,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                     // TODO: Marshalling to and from Maze type is not needed here
                     // Leaving it for now as an example, as it may be useful elsewhere
                     let lMaze = new cc2018_ts_lib_1.Maze().loadFromJSON(JSON.stringify(docs[0]));
-                    res.status(200).json(JSON.stringify(docs[0]));
+                    res.status(200).json(docs[0]);
                 }
             });
         });
@@ -108,7 +108,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                         mazes.push(stub);
                     });
                     // send the json data
-                    res.status(200).json(JSON.stringify(mazes));
+                    res.status(200).json(mazes);
                 }
             });
         });

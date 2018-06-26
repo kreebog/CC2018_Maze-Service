@@ -1,15 +1,80 @@
+doctype html
 html
     head
-        title Maze Service - Page Not Found
+        style
+            include style.css
+        title Maze Service - API Documentation
     body
-        h3 URL: #{endpoint}
+        h1 API Documentation
         hr
-        p The page you requested could not be found.  Please try again.
-        p Sample Links: 
-            ul  
-                li 
-                    a(href=sampleList) #{sampleList}
-                li 
+        br
+        table
+            th Method
+            th Action
+            th Type
+            th Arguments
+            th Return
+            th Sample
+            th Status
+            th Description
+            tr
+                td Get
+                td Get
+                td JSON 
+                td(class='td-left') MazeId - height:width:seed
+                td(class='td-left') Maze
+                td(class='td-left')
                     a(href=sampleGet) #{sampleGet}
-                li
+                td Current
+                td(class='td-left') Returns the first maze with the matching MazeID
+            tr
+                td Get
+                td Get All
+                td JSON
+                td(class='td-left') N/A
+                td(class='td-left') Array (Maze Info)
+                td(class='td-left')
+                    a(href=sampleGetAll) #{sampleGetAll}
+                td Current
+                td(class='td-left') Returns a list key data for all existing mazes
+            tr
+                td Get
+                td Generate
+                td JSON
+                td(class='td-left') Parameters - height/width/seed
+                td(class='td-left') New Maze
+                td(class='td-left')
+                    a(href=sampleGenerate) #{sampleGenerate}
+                td Current
+                td(class='td-left') Generates, stores, and returns a new maze object
+            tr
+                td Get
+                td Delete
+                td JSON
+                td(class='td-left') MazeId - height:width:seed
+                td(class='td-left') Result
+                td(class='td-left')
+                    a(href=sampleDelete) #{sampleDelete}
+                td Current
+                td(class='td-left') Deletes a single maze document
+            tr
+                td Get
+                td List
+                td HTML
+                td(class='td-left') N/A
+                td(class='td-left') HTML Page
+                td(class='td-left')
+                    a(href=sampleList) #{sampleList}
+                td Current
+                td(class='td-left') Lists all mazes w/ handy function links
+            tr
+                td Get
+                td View
+                td HTML
+                td(class='td-left') MazeId - height:width:seed
+                td(class='td-left') HTML Page
+                td(class='td-left')
                     a(href=sampleView) #{sampleView}
+                td Current
+                td(class='td-left') Simple view of a maze w/ text-based rendering.
+

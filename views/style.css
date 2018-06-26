@@ -5,3 +5,16 @@ table, td, th {
     collapse; 
     text-align: center;
 }
+
+.td-left {
+    text-align: left;
+}
+
+.notice {
+    font-weight: bold;
+    color: red;
+}
+
+.deprecated{
+    background-color: lightgray;
+}

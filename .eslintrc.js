@@ -9,6 +9,6 @@ module.exports = {
         "max-len": "off",
         "no-multiple-empty-lines": "off",
         "no-trailing-spaces": "off",
-        "padded-blocks": off,
+        "padded-blocks": "off",
     }
 };

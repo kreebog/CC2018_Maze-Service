@@ -5,8 +5,8 @@ html(lang='en')
             include style.css
         title Maze Service - List
         body
-            h1 Maze Generator Service - List of Stored Mazes 
-            div The following is a list of all mazes currently stored in the database, with associated actions.
+            h1 Maze Service - List Mazes
+            hr
             br
             div
                 #mazes
@@ -22,10 +22,10 @@ html(lang='en')
                                     td= maze.width
                                     td= maze.seed
                                     td
-                                        a(href='/view/' + maze.height + '/' + maze.width + '/' + maze.seed) view
+                                        a(href='/view/' + maze.height + ':' + maze.width + ':' + maze.seed) view
                                         | &nbsp;|&nbsp;
-                                        a(href='/get/' + maze.height + '/' + maze.width + '/' + maze.seed) json
+                                        a(href='/get/' + maze.height + ':' + maze.width + ':' + maze.seed) json
+                                        | &nbsp;|&nbsp;
+                                        a(href='/delete/' + maze.height + ':' + maze.width + ':' + maze.seed) delete
                     else
                         h3 No mazes found in the database.
-
-                        

@@ -10,7 +10,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = __importDefault(require("util"));
+const util_1 = require("util");
 const seedrandom_1 = __importDefault(require("seedrandom"));
 const log = __importStar(require("./Logger"));
 const Enums = __importStar(require("./Enums"));
@@ -18,7 +18,9 @@ const Cell_1 = __importDefault(require("./Cell"));
 let carveDepth = 0; // tracks the level of recursion during path carving
 let maxCarveDepth = 0; // tracks the deepest level of carve recursion seen 
 let startGenTime = 0; // used to determine time spent generating a maze
+const MAX_CELL_COUNT = 2500;
 class Maze {
+    // don't let the maze get too big or the server will run out of memory during generation
     constructor() {
         this.cells = new Array();
         this.height = 0;
@@ -26,8 +28,6 @@ class Maze {
         this.seed = '';
         this.textRender = '';
         this.id = '';
-        // don't let the maze get too big or the server will run out of memory during generation
-        this.MAX_CELL_COUNT = 2500;
     }
     // loads object from values given in json string
     loadFromJSON(jsonMaze) {
@@ -52,9 +52,6 @@ class Maze {
     getId() {
         return this.id;
     }
-    getMaxCellCount() {
-        return this.MAX_CELL_COUNT;
-    }
     /**
      * Generates a new maze based on the given parameters
      * @param height - The height of the maze grid
@@ -66,7 +63,7 @@ class Maze {
             log.warn(__filename, 'generate()', 'This maze has already been generated.');
             return this;
         }
-        log.info(__filename, 'generate()', util_1.default.format('Generating new %d (height) x %d (width) maze with seed "%s"', height, width, seed));
+        log.info(__filename, 'generate()', util_1.format('Generating new %d (height) x %d (width) maze with seed "%s"', height, width, seed));
         startGenTime = Date.now();
         // validate height and width and collect errors
         let errors = new Array();
@@ -78,8 +75,8 @@ class Maze {
         this.height = height;
         this.width = width;
         // check for size constraint
-        if (height * width > this.MAX_CELL_COUNT) {
-            throw new Error(util_1.default.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', this.MAX_CELL_COUNT, height, width, (height * width)));
+        if (height * width > MAX_CELL_COUNT) {
+            throw new Error(util_1.format('MAX CELL COUNT (%d) EXCEEDED!  %d*%d=%d - Please reduce Height and/or Width and try again.', MAX_CELL_COUNT, height, width, (height * width)));
         }
         // implement random seed
         if (seed && seed.length > 0) {
@@ -87,7 +84,7 @@ class Maze {
             seedrandom_1.default(seed, { global: true });
         }
         // set maze's ID
-        this.id = util_1.default.format('%d:%d:%s', this.height, this.width, this.seed);
+        this.id = util_1.format('%d:%d:%s', this.height, this.width, this.seed);
         // build the empty cells array
         this.cells = new Array(height);
         for (let y = 0; y < height; y++) {
@@ -99,11 +96,11 @@ class Maze {
             }
             this.cells[y] = row;
         }
-        log.debug(__filename, 'generate()', util_1.default.format('Generated [%d][%d] grid of %d empty cells.', height, width, (height * width)));
+        log.debug(__filename, 'generate()', util_1.format('Generated [%d][%d] grid of %d empty cells.', height, width, (height * width)));
         // randomize start and finish locations
         let startCol = Math.floor(Math.random() * width);
         let finishCol = Math.floor(Math.random() * width);
-        log.debug(__filename, 'generate()', util_1.default.format('Adding START ([%d][%d]) and FINISH ([%d][%d]) cells.', 0, startCol, height - 1, finishCol));
+        log.debug(__filename, 'generate()', util_1.format('Adding START ([%d][%d]) and FINISH ([%d][%d]) cells.', 0, startCol, height - 1, finishCol));
         // tag start and finish columns (start / finish tags force matching exits on edge)
         this.cells[0][startCol].addTag(Enums.TAGS.START);
         this.cells[height - 1][finishCol].addTag(Enums.TAGS.FINISH);
@@ -111,12 +108,12 @@ class Maze {
         this.carvePassage(this.cells[0][0]);
         // render the maze so the text rendering is set
         this.render();
-        log.info(__filename, 'generate()', util_1.default.format('Generation Complete: Time=%dms, Recursion=%d, MazeID=%s', (Date.now() - startGenTime), maxCarveDepth, this.getId()));
+        log.info(__filename, 'generate()', util_1.format('Generation Complete: Time=%dms, Recursion=%d, MazeID=%s', (Date.now() - startGenTime), maxCarveDepth, this.getId()));
         return this;
     }
     carvePassage(cell) {
         carveDepth++;
-        log.debug(__filename, 'carvePassage()', util_1.default.format('Recursion: %d. Carving STARTED for cell [%d][%d].', carveDepth, cell.getLocation().y, cell.getLocation().x));
+        log.debug(__filename, 'carvePassage()', util_1.format('Recursion: %d. Carving STARTED for cell [%d][%d].', carveDepth, cell.getLocation().y, cell.getLocation().x));
         // randomly sort an array of bitwise directional values (see also: Enums.Dirs)
         let dirs = [1, 2, 4, 8].sort(function (a, b) { return 0.5 - Math.random(); });
         // wander through the grid using randomized directions provided in dirs[],
@@ -143,7 +140,7 @@ class Maze {
             }
             catch (_a) {
                 // somehow still grabbed an invalid cell
-                log.error(__filename, 'carvePassage()', util_1.default.format('Error getting cell [%d][%d].', ny, nx));
+                log.error(__filename, 'carvePassage()', util_1.format('Error getting cell [%d][%d].', ny, nx));
             }
         }
         // update carve depth counters
@@ -152,7 +149,7 @@ class Maze {
         }
         // exiting the function relieves one level of recursion
         carveDepth--;
-        log.trace(__filename, 'carvePassage()', util_1.default.format('Recursion: %d. Carve COMPLETED for cell [%d][%d].', carveDepth, cell.getLocation().y, cell.getLocation().x));
+        log.trace(__filename, 'carvePassage()', util_1.format('Recursion: %d. Carve COMPLETED for cell [%d][%d].', carveDepth, cell.getLocation().y, cell.getLocation().x));
     }
     /**
      * Returns a text rendering of the maze as a grid of 3x3

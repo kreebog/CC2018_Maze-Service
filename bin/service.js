@@ -10,49 +10,53 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+require('dotenv').config();
 const path_1 = __importDefault(require("path"));
 const Maze_1 = require("./Maze");
 const util_1 = require("util");
 const log = __importStar(require("./Logger"));
 const express_1 = __importDefault(require("express"));
 const mongodb_1 = require("mongodb");
-// constant value references
-const DB_URL = 'mongodb+srv://mdbuser:cc2018-mdbpw@cluster0-bxvkt.mongodb.net/';
+// constants from environment variables (or .env file)
+const ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
+const DB_URL = util_1.format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
+const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
+// general constant values
 const COL_NAME = 'mazes';
-const APP_PORT = 8080;
-// constant object references
+const SVC_NAME = 'maze-service';
+// create express references
 const app = express_1.default();
+let httpServer; // will be set with app.listen
+let mongoDBClient; // set on successful connection to db
+// configure pug
 app.set('views', 'views');
 app.set('view engine', 'pug');
-// configure modules
-log.setLogLevel(log.LOG_LEVELS.DEBUG);
+// set the logging level based on current env
+log.setLogLevel((ENV == 'DVLP' ? log.LOG_LEVELS.DEBUG : log.LOG_LEVELS.INFO));
+log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + ENV);
 // only start the web service after connecting to the database
-mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
+log.info(__filename, SVC_NAME, 'Connecting to MongoDB: ' + DB_URL);
+mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
     if (err) {
-        log.error(__filename, '', JSON.stringify(err));
+        log.error(__filename, SVC_NAME, util_1.format('Error connecting to %s:\n%s', DB_URL, JSON.stringify(err)));
         return err;
     }
+    mongoDBClient = client;
     // get the cc2018 database and the mazes collection
     let db = client.db(DB_NAME);
     let col = db.collection(COL_NAME);
     // all is well, listen for connections
-    app.listen(APP_PORT, function () {
-        log.info(__filename, '', util_1.format('Listening on port %d', APP_PORT));
-        // gets maze with the given id (combination of height:width:seed)
-        app.get('/get/:height/:width/:seed', (req, res) => {
-            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+    httpServer = app.listen(SVC_PORT, function () {
+        log.info(__filename, SVC_NAME, 'Listening on port ' + SVC_PORT);
+        // accepts MazeID (string concatenation of Height:Width:Seed)
+        app.get('/get/:mazeId', (req, res) => {
+            let mazeId = req.params.mazeId;
             // search the collection for a maze with the right id
-            let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
+            col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
-                        errName: err.name,
-                        errMsg: err.message
-                    });
+                    return res.status(500).json({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // warn if there are duplicates - we'll only work with the first record found
                 if (docs.length > 1) {
@@ -60,32 +64,86 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
                 }
                 // if no match found, generate a new maze from the given values
                 if (docs.length == 0) {
-                    log.debug(__filename, req.path, util_1.format('Maze "%s" not found.  Generating...', mazeId));
-                    // error handling and input checks are in the Maze class - descriptive error will be returned 
-                    try {
-                        let maze = new Maze_1.Maze().generate(req.params.height, req.params.width, req.params.seed);
-                        log.debug(__filename, req.path, util_1.format('Maze "%s" generated.  Storing...', mazeId));
-                        col.insert(maze);
-                        log.debug(__filename, req.path, util_1.format('Returning Maze "%s" as JSON...', mazeId));
-                        res.status(200).send(JSON.stringify(maze));
-                    }
-                    catch (error) {
-                        log.error(__filename, req.path, util_1.format('Error during maze generation: %s', error.message));
-                        res.render('error', {
-                            responseCode: 500,
-                            endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                            sample: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
-                            errMsg: error.message
-                        });
-                    }
+                    log.debug(__filename, req.path, util_1.format('Maze "%s" not found.', mazeId));
+                    res.status(404).json({ 'status': util_1.format('Maze "%s" not found.', mazeId) });
                 }
                 else {
                     // match was found in the database return it as json
-                    log.debug(__filename, req.path, util_1.format('Maze "%s" found in DB, return as JSON...', mazeId));
+                    log.debug(__filename, req.path, util_1.format('Maze "%s" found, return as JSON...', mazeId));
                     // TODO: Marshalling to and from Maze type is not needed here
                     // Leaving it for now as an example, as it may be useful elsewhere
                     let lMaze = new Maze_1.Maze().loadFromJSON(JSON.stringify(docs[0]));
-                    res.status(200).send(JSON.stringify(docs[0]));
+                    res.status(200).json(JSON.stringify(docs[0]));
+                }
+            });
+        });
+        // Left in for backward compatibility, builds mazeId from original /get/h/w/seed format and redirects 
+        // to new /get/mazeId route
+        app.get('/get/:height/:width/:seed', (req, res) => {
+            log.debug(__filename, req.path, 'Deprecated route - redirecting to /get/mazeId...');
+            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+            return res.redirect('/get/' + mazeId);
+        });
+        // gets all mazes
+        app.get('/get', (req, res) => {
+            // search the collection for a maze with the right id
+            col.find({}, { fields: { _id: 0, id: 1, height: 1, width: 1, seed: 1 } }).toArray((err, docs) => {
+                if (err) {
+                    log.error(__filename, req.path, JSON.stringify(err));
+                    return res.status(500).json({ 'status': util_1.format('Error finding getting mazes from "%s": %s', COL_NAME, err.message) });
+                }
+                // if no match found, generate a new maze from the given values
+                if (docs.length == 0) {
+                    log.debug(__filename, req.path, util_1.format('No mazes foundin collectoin ""', COL_NAME));
+                    res.status(404).json({ 'status': util_1.format('No mazes foundin collectoin ""', COL_NAME) });
+                }
+                else {
+                    // match was found in the database return it as json
+                    log.debug(__filename, req.path, util_1.format('%d mazes found in "%s", returning JSON ...', docs.length, COL_NAME));
+                    // cosntruct an array with key maze properties and a get url
+                    let mazes = new Array();
+                    docs.forEach(doc => {
+                        let stub = {
+                            'id': doc.id,
+                            'height': doc.height,
+                            'width': doc.width,
+                            'seed': doc.seed,
+                            'url': util_1.format('http://%s/get/%d/%d/%s', req.headers.host, doc.height, doc.width, doc.seed)
+                        };
+                        mazes.push(stub);
+                    });
+                    // send the json data
+                    res.status(200).json(JSON.stringify(mazes));
+                }
+            });
+        });
+        // gets maze with the given id (combination of height:width:seed)
+        app.get('/generate/:height/:width/:seed', (req, res) => {
+            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+            // search the collection for a maze with the right id
+            col.find({ id: mazeId }).toArray((err, docs) => {
+                if (err) {
+                    log.error(__filename, req.path, JSON.stringify(err));
+                    return res.status(500).json({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                }
+                // warn if there are duplicates - we'll only work with the first record found
+                if (docs.length > 0) {
+                    log.warn(__filename, req.path, util_1.format('%d maze(s) found with id "%s", aborting.', docs.length, mazeId));
+                    return res.status(400).json({ 'status': util_1.format('Maze "%s" already exists.', mazeId) });
+                }
+                // if no match found, generate a new maze from the given values
+                log.debug(__filename, req.path, util_1.format('Generating maze "%s"...', mazeId));
+                // error handling and input checks are in the Maze class - descriptive error will be returned 
+                try {
+                    let maze = new Maze_1.Maze().generate(req.params.height, req.params.width, req.params.seed);
+                    log.debug(__filename, req.path, util_1.format('Maze "%s" generated.  Storing...', mazeId));
+                    col.insert(maze);
+                    log.debug(__filename, req.path, util_1.format('Returning Maze "%s" as JSON...', mazeId));
+                    res.status(200).send(JSON.stringify(maze));
+                }
+                catch (error) {
+                    log.error(__filename, req.path, util_1.format('Error during maze generation: %s', error.message));
+                    res.status(500).json({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, error.message) });
                 }
             });
         });
@@ -94,18 +152,13 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
          * TODO: Page this?  It might get long...
          */
         app.get('/list', (req, res) => {
-            let cursor = col.find({}).toArray((err, docs) => {
+            col.find({}).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
-                        errName: err.name,
-                        errMsg: err.message
-                    });
+                    return res.status(500).json({ 'status': util_1.format('Error getting all documents from "%s": %s', COL_NAME, err.message) });
                 }
                 res.render('list', {
+                    contentType: 'text/html',
                     responseCode: 200,
                     mazes: docs
                 });
@@ -114,38 +167,50 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
         /**
          * Renders a simple view of the maze
          */
-        app.get('/view/:height/:width/:seed', (req, res) => {
-            let mazeId = util_1.format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
-            let cursor = col.find({ id: mazeId }).toArray((err, docs) => {
+        app.get('/view/:mazeId', (req, res) => {
+            let mazeId = req.params.mazeId;
+            col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    res.render('error', {
-                        responseCode: 500,
-                        endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                        sample: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
-                        errName: err.name,
-                        errMsg: err.message
-                    });
+                    return res.status(500).json({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 if (docs.length > 1) {
                     log.warn(__filename, req.path, util_1.format('%d mazes found with id "', docs.length, mazeId));
                 }
                 if (docs.length == 0) {
                     log.debug(__filename, req.path, util_1.format('No maze with id %s found.', mazeId));
+                    return res.status(404).json({ 'status': util_1.format('Maze "%s%" not found.', mazeId) });
                 }
                 else {
                     log.debug(__filename, req.path, util_1.format('Maze "%s" found in DB, viewing...', mazeId));
-                    res.render('view', {
-                        responseCode: 200,
+                    res.status(200).render('view', {
+                        contentType: 'text/html',
                         maze: docs[0]
                     });
                 }
             });
         });
         /**
+         * Deletes maze documents with matching ID
+         */
+        app.get('/delete/:mazeId', (req, res) => {
+            let mazeId = req.params.mazeId;
+            // delete the first document with the matching mazeId
+            col.deleteOne({ id: mazeId }, function (err, results) {
+                if (err) {
+                    log.error(__filename, req.path, JSON.stringify(err));
+                    return res.status(500).json({ 'status': util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                }
+                // send the result code with deleted doc count
+                res.status(200).json({ 'status': 'ok', 'count': results.deletedCount });
+                log.info(__filename, req.path, util_1.format('%d document(s) deleted', results.deletedCount));
+            });
+        });
+        /**
          * Handle favicon requests - using the BCBST favicon.ico
          */
         app.get('/favicon.ico', (req, res) => {
+            res.setHeader('Content-Type', 'image/x-icon');
             res.status(200).sendFile(path_1.default.resolve('views/favicon.ico'));
         });
         /**
@@ -153,14 +218,43 @@ mongodb_1.MongoClient.connect(DB_URL + DB_NAME, function (err, client) {
          */
         app.get('/*', (req, res) => {
             log.debug(__filename, req.path, 'Invalid path in URL.');
+            res.setHeader('Content-Type', 'text/html');
             res.render('index', {
+                contentType: 'text/html',
                 responseCode: 404,
-                endpoint: util_1.format('http://%s%s', req.headers.host, req.url),
-                sampleGet: util_1.format('http://%s/get/10/15/SimpleSample', req.headers.host),
-                sampleView: util_1.format('http://%s/view/10/15/SimpleSample', req.headers.host),
+                sampleGetAll: util_1.format('http://%s/get', req.headers.host),
+                sampleGet: util_1.format('http://%s/get/10:15:SimpleSample', req.headers.host),
+                sampleGenerate: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
+                sampleDelete: util_1.format('http://%s/delete/10:15:SimpleSample', req.headers.host),
+                sampleView: util_1.format('http://%s/view/10:15:SimpleSample', req.headers.host),
                 sampleList: util_1.format('http://%s/list', req.headers.host),
             });
         });
     });
 });
+/**
+ * Watch for SIGINT (process interrupt signal) and trigger shutdown
+ */
+process.on('SIGINT', function onSigInt() {
+    // all done, close the db connection
+    log.info(__filename, 'onSigInt()', 'Got SIGINT - Exiting applicaton...');
+    doShutdown();
+});
+/**
+ * Watch for SIGTERM (process terminate signal) and trigger shutdown
+ */
+process.on('SIGTERM', function onSigTerm() {
+    // all done, close the db connection
+    log.info(__filename, 'onSigTerm()', 'Got SIGTERM - Exiting applicaton...');
+    doShutdown();
+});
+/**
+ * Gracefully shut down the service
+ */
+function doShutdown() {
+    log.info(__filename, 'doShutDown()', 'Closing HTTP Server connections...');
+    httpServer.close();
+    log.info(__filename, 'doShutDown()', 'Closing Database connections...');
+    mongoDBClient.close();
+}
 //# sourceMappingURL=service.js.map

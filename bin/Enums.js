@@ -20,6 +20,15 @@ var TAGS;
     TAGS[TAGS["PATH"] = 4] = "PATH";
     TAGS[TAGS["CARVED"] = 8] = "CARVED";
 })(TAGS = exports.TAGS || (exports.TAGS = {}));
+// enumeration of possible game results
+var GAME_RESULTS;
+(function (GAME_RESULTS) {
+    GAME_RESULTS[GAME_RESULTS["WIN"] = 0] = "WIN";
+    GAME_RESULTS[GAME_RESULTS["OUT_OF_MOVES"] = 1] = "OUT_OF_MOVES";
+    GAME_RESULTS[GAME_RESULTS["OUT_OF_TIME"] = 2] = "OUT_OF_TIME";
+    GAME_RESULTS[GAME_RESULTS["DEATH_TRAP"] = 3] = "DEATH_TRAP";
+    GAME_RESULTS[GAME_RESULTS["DEATH_POISON"] = 4] = "DEATH_POISON";
+})(GAME_RESULTS = exports.GAME_RESULTS || (exports.GAME_RESULTS = {}));
 /**
  * Returns comma-delimited string of the selected (bitwise) values within
  * the given enumeration.

@@ -2,21 +2,16 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (Object.hasOwnProperty.call(mod, k)) result[k] = mod[k];
-    result["default"] = mod;
-    return result;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
 const path_1 = __importDefault(require("path"));
-const Maze_1 = require("./Maze");
 const util_1 = require("util");
-const log = __importStar(require("./Logger"));
 const express_1 = __importDefault(require("express"));
 const mongodb_1 = require("mongodb");
+const cc2018_ts_lib_1 = require("cc2018-ts-lib");
+const Logger_1 = require("cc2018-ts-lib/dist/Logger");
+// get singleton logger instance
+const log = cc2018_ts_lib_1.Logger.getInstance();
 // constants from environment variables (or .env file)
 const ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
@@ -33,7 +28,7 @@ let mongoDBClient; // set on successful connection to db
 app.set('views', 'views');
 app.set('view engine', 'pug');
 // set the logging level based on current env
-log.setLogLevel((ENV == 'DVLP' ? log.LOG_LEVELS.DEBUG : log.LOG_LEVELS.INFO));
+log.setLogLevel((ENV == 'DVLP' ? Logger_1.LOG_LEVELS.DEBUG : Logger_1.LOG_LEVELS.INFO));
 log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + ENV);
 // only start the web service after connecting to the database
 log.info(__filename, SVC_NAME, 'Connecting to MongoDB: ' + DB_URL);
@@ -72,7 +67,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                     log.debug(__filename, req.path, util_1.format('Maze "%s" found, return as JSON...', mazeId));
                     // TODO: Marshalling to and from Maze type is not needed here
                     // Leaving it for now as an example, as it may be useful elsewhere
-                    let lMaze = new Maze_1.Maze().loadFromJSON(JSON.stringify(docs[0]));
+                    let lMaze = new cc2018_ts_lib_1.Maze().loadFromJSON(JSON.stringify(docs[0]));
                     res.status(200).json(JSON.stringify(docs[0]));
                 }
             });
@@ -135,7 +130,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 log.debug(__filename, req.path, util_1.format('Generating maze "%s"...', mazeId));
                 // error handling and input checks are in the Maze class - descriptive error will be returned 
                 try {
-                    let maze = new Maze_1.Maze().generate(req.params.height, req.params.width, req.params.seed);
+                    let maze = new cc2018_ts_lib_1.Maze().generate(req.params.height, req.params.width, req.params.seed);
                     log.debug(__filename, req.path, util_1.format('Maze "%s" generated.  Storing...', mazeId));
                     col.insert(maze);
                     log.debug(__filename, req.path, util_1.format('Returning Maze "%s" as JSON...', mazeId));

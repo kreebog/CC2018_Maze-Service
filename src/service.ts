@@ -1,11 +1,15 @@
 require('dotenv').config();
 import path from 'path';
-import { Maze } from './Maze'
 import { format } from 'util';
-import * as log from './Logger';
 import express from 'express';
 import { Server } from 'http';
 import { MongoClient } from 'mongodb';
+
+import { Maze, Logger } from 'cc2018-ts-lib';
+import { LOG_LEVELS } from 'cc2018-ts-lib/dist/Logger';
+
+// get singleton logger instance
+const log = Logger.getInstance();
 
 // constants from environment variables (or .env file)
 const ENV = process.env['NODE_ENV'] || 'PROD';
@@ -27,7 +31,7 @@ app.set('views', 'views');
 app.set('view engine', 'pug');
 
 // set the logging level based on current env
-log.setLogLevel((ENV == 'DVLP' ? log.LOG_LEVELS.DEBUG : log.LOG_LEVELS.INFO));
+log.setLogLevel((ENV == 'DVLP' ? LOG_LEVELS.DEBUG : LOG_LEVELS.INFO));
 log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + ENV);
 
 // only start the web service after connecting to the database

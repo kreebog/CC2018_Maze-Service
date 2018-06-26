@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/kreebog/CC2018_Maze_Generator#readme",
   "dependencies": {
-    "cc2018-ts-lib": "0.0.9",
+    "cc2018-ts-lib": "^1.0.0",
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "mongodb": "^3.0.10",
@@ -29,7 +29,7 @@
   "devDependencies": {
     "@types/express": "^4.16.0",
     "@types/mongodb": "^3.0.21",
-    "@types/node": "^10.3.5",
+    "@types/node": "^10.3.6",
     "@types/pug": "^2.0.4",
     "@types/seedrandom": "^2.4.27",
     "eslint": "^4.19.1",

@@ -67,8 +67,13 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                     log.debug(__filename, req.path, util_1.format('Maze "%s" found, return as JSON...', mazeId));
                     // TODO: Marshalling to and from Maze type is not needed here
                     // Leaving it for now as an example, as it may be useful elsewhere
-                    let lMaze = new cc2018_ts_lib_1.Maze().loadFromJSON(JSON.stringify(docs[0]));
-                    res.status(200).json(docs[0]);
+                    try {
+                        let lMaze = new cc2018_ts_lib_1.Maze().loadFromJSON(docs[0]);
+                        res.status(200).json(docs[0]);
+                    }
+                    catch (_a) {
+                        res.status(500).json({ 'status': 'Unable to load maze from JSON.', 'data': JSON.stringify(docs[0]) });
+                    }
                 }
             });
         });

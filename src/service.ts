@@ -79,8 +79,12 @@ MongoClient.connect(DB_URL, function(err, client) {
 
                     // TODO: Marshalling to and from Maze type is not needed here
                     // Leaving it for now as an example, as it may be useful elsewhere
-                    let lMaze = new Maze().loadFromJSON(JSON.stringify(docs[0]));
-                    res.status(200).json(docs[0]);
+                    try {
+                        let lMaze = new Maze().loadFromJSON(docs[0]);
+                        res.status(200).json(docs[0]);
+                    } catch {
+                        res.status(500).json({'status': 'Unable to load maze from JSON.', 'data': JSON.stringify(docs[0])});
+                    }
                 }
             });
         });

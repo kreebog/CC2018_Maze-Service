@@ -85,10 +85,8 @@ MongoClient.connect(DB_URL, function(err, client) {
                     // match was found in the database return it as json
                     log.debug(__filename, req.path, format('Maze "%s" found, return as JSON...', mazeId));
 
-                    // TODO: Marshalling to and from Maze type is not needed here
-                    // Leaving it for now as an example, as it may be useful elsewhere
+                    // send the first matching maze doc
                     try {
-                        let lMaze = new Maze().loadFromJSON(docs[0]);
                         res.status(200).json(docs[0]);
                     } catch {
                         res.status(500).json({'status': 'Unable to load maze from JSON.', 'data': JSON.stringify(docs[0])});

@@ -13,7 +13,7 @@ const Logger_1 = require("cc2018-ts-lib/dist/Logger");
 // get singleton logger instance
 const log = cc2018_ts_lib_1.Logger.getInstance();
 // constants from environment variables (or .env file)
-const ENV = process.env['NODE_ENV'] || 'PROD';
+const NODE_ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
 const DB_URL = util_1.format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
 const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
@@ -28,8 +28,8 @@ let mongoDBClient; // set on successful connection to db
 app.set('views', 'views');
 app.set('view engine', 'pug');
 // set the logging level based on current env
-log.setLogLevel((ENV == 'DVLP' ? Logger_1.LOG_LEVELS.DEBUG : Logger_1.LOG_LEVELS.INFO));
-log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + ENV);
+log.setLogLevel((NODE_ENV == 'DVLP' ? Logger_1.LOG_LEVELS.DEBUG : Logger_1.LOG_LEVELS.INFO));
+log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + NODE_ENV);
 // only start the web service after connecting to the database
 log.info(__filename, SVC_NAME, 'Connecting to MongoDB: ' + DB_URL);
 mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
@@ -71,10 +71,8 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 else {
                     // match was found in the database return it as json
                     log.debug(__filename, req.path, util_1.format('Maze "%s" found, return as JSON...', mazeId));
-                    // TODO: Marshalling to and from Maze type is not needed here
-                    // Leaving it for now as an example, as it may be useful elsewhere
+                    // send the first matching maze doc
                     try {
-                        let lMaze = new cc2018_ts_lib_1.Maze().loadFromJSON(docs[0]);
                         res.status(200).json(docs[0]);
                     }
                     catch (_a) {

@@ -44,6 +44,12 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
     // all is well, listen for connections
     httpServer = app.listen(SVC_PORT, function () {
         log.info(__filename, SVC_NAME, 'Listening on port ' + SVC_PORT);
+        // allow CORS for this application
+        app.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
         // accepts MazeID (string concatenation of Height:Width:Seed)
         app.get('/get/:mazeId', (req, res) => {
             let mazeId = req.params.mazeId;

@@ -10,6 +10,7 @@ import { LOG_LEVELS } from 'cc2018-ts-lib/dist/Logger';
 
 // get singleton logger instance
 const log = Logger.getInstance();
+log.setLogLevel(parseInt(process.env['LOG_LEVEL'] || '3')); // defaults to "INFO"
 
 // constants from environment variables (or .env file)
 const NODE_ENV = process.env['NODE_ENV'] || 'PROD';
@@ -31,8 +32,7 @@ let mongoDBClient: MongoClient; // set on successful connection to db
 app.set('views', 'views');
 app.set('view engine', 'pug');
 
-// set the logging level based on current env
-log.setLogLevel((NODE_ENV == 'DVLP' ? LOG_LEVELS.DEBUG : LOG_LEVELS.INFO));
+// log the environment
 log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + NODE_ENV);
 
 // only start the web service after connecting to the database

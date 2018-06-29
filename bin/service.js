@@ -9,9 +9,9 @@ const util_1 = require("util");
 const express_1 = __importDefault(require("express"));
 const mongodb_1 = require("mongodb");
 const cc2018_ts_lib_1 = require("cc2018-ts-lib");
-const Logger_1 = require("cc2018-ts-lib/dist/Logger");
 // get singleton logger instance
 const log = cc2018_ts_lib_1.Logger.getInstance();
+log.setLogLevel(parseInt(process.env['LOG_LEVEL'] || '0'));
 // constants from environment variables (or .env file)
 const NODE_ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
@@ -27,8 +27,7 @@ let mongoDBClient; // set on successful connection to db
 // configure pug
 app.set('views', 'views');
 app.set('view engine', 'pug');
-// set the logging level based on current env
-log.setLogLevel((NODE_ENV == 'DVLP' ? Logger_1.LOG_LEVELS.DEBUG : Logger_1.LOG_LEVELS.INFO));
+// log the environment
 log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + NODE_ENV);
 // only start the web service after connecting to the database
 log.info(__filename, SVC_NAME, 'Connecting to MongoDB: ' + DB_URL);

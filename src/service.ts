@@ -167,7 +167,7 @@ MongoClient.connect(DB_URL, function(err, client) {
                     col.insert(maze);
 
                     log.debug(__filename, req.path, format('Returning Maze "%s" as JSON...', mazeId));
-                    res.status(200).send(JSON.stringify(maze));
+                    res.status(200).json(maze);
                 } catch (error) {
                     log.error(__filename, req.path, format('Error during maze generation: %s', error.message));
                     res.status(500).json({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, error.message)});

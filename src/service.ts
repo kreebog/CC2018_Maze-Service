@@ -1,12 +1,11 @@
 require('dotenv').config();
-import path from 'path';
+import path, { parse } from 'path';
 import { format } from 'util';
 import express from 'express';
 import { Server } from 'http';
 import { MongoClient } from 'mongodb';
 
 import { Maze, Logger } from 'cc2018-ts-lib';
-import { LOG_LEVELS } from 'cc2018-ts-lib/dist/Logger';
 
 // get singleton logger instance
 const log = Logger.getInstance();
@@ -105,7 +104,7 @@ MongoClient.connect(DB_URL, function(err, client) {
         
         // gets all mazes
         app.get('/get', (req, res) => {
-            // search the collection for a maze with the right id
+            // finds all mazes, but only returns basic maze key information
             col.find({}, {fields:{_id:0,id:1,height:1,width:1,seed:1}}).toArray( (err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
@@ -114,11 +113,11 @@ MongoClient.connect(DB_URL, function(err, client) {
 
                 // if no match found, generate a new maze from the given values
                 if (docs.length == 0) {
-                    log.debug(__filename, req.path, format('No mazes foundin collectoin ""', COL_NAME));
-                    res.status(404).json({'status': format('No mazes foundin collectoin ""', COL_NAME)});
+                    log.debug(__filename, req.path, format('No mazes found in collection %s', COL_NAME));
+                    res.status(404).json({'status': format('No mazes found in collectoin %s', COL_NAME)});
                 } else {
                     // match was found in the database return it as json
-                    log.debug(__filename, req.path, format('%d mazes found in "%s", returning JSON ...', docs.length, COL_NAME));
+                    log.debug(__filename, req.path, format('%d mazes found in %s, returning JSON ...', docs.length, COL_NAME));
                     
                     // cosntruct an array with key maze properties and a get url
                     let mazes = new Array();
@@ -174,6 +173,19 @@ MongoClient.connect(DB_URL, function(err, client) {
                 }
             });
         });
+
+        app.get('/generate/:mazeId', (req, res) => {
+            log.debug(__filename, req.url, 'Attempting to parse and redirect single mazeId parameter for /generate.');
+            try {
+                let mazeId: string = req.params.mazeId;
+                let mazeIdParts = mazeId.split(':');
+                let newUrl = format('/generate/%d/%d/%s', parseInt(mazeIdParts[0]), parseInt(mazeIdParts[1]), mazeIdParts[2]);
+                return res.redirect(newUrl);
+            } catch (err) {
+                return res.status(400).json({'status':'Unable to parse URL.  Expected format: /generate/HEIGHT/WIDTH/SEED'});
+            }
+        });
+
 
         /**
          * Lists all mazes currently in the database

@@ -1,5 +1,5 @@
 require('dotenv').config();
-import path, { parse } from 'path';
+import path from 'path';
 import { format } from 'util';
 import express from 'express';
 import { Server } from 'http';

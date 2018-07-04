@@ -9,72 +9,72 @@ html
         hr
         br
         table
-            th Method
+            th Link
             th Action
             th Type
             th Arguments
             th Return
-            th Sample
+            th Method
             th Status
             th Description
             tr
+                td(class='td-left')
+                    a(href=sampleGet) Get Maze
                 td Get
                 td Get
                 td JSON 
                 td(class='td-left') MazeId - height:width:seed
                 td(class='td-left') Maze
-                td(class='td-left')
-                    a(href=sampleGet) #{sampleGet}
                 td Current
                 td(class='td-left') Returns the first maze with the matching MazeID
             tr
+                td(class='td-left')
+                    a(href=sampleGetAll) Get Mazes
                 td Get
                 td Get All
                 td JSON
                 td(class='td-left') N/A
                 td(class='td-left') Array (Maze Info)
-                td(class='td-left')
-                    a(href=sampleGetAll) #{sampleGetAll}
                 td Current
-                td(class='td-left') Returns a list key data for all existing mazes
+                td(class='td-left') Returns key data for all existing mazes
             tr
+                td(class='td-left')
+                    a(href=sampleGenerate) Generate Maze
                 td Get
                 td Generate
                 td JSON
                 td(class='td-left') Parameters - /height/width/seed <br><br><i>[New Option] MazeID format: /height:width:seed</i>
                 td(class='td-left') New Maze
-                td(class='td-left')
-                    a(href=sampleGenerate) #{sampleGenerate}
                 td Current
                 td(class='td-left') Generates, stores, and returns a new maze object
             tr
+                td(class='td-left')
+                    a(href=sampleDelete) Delete Maze
                 td Get
                 td Delete
                 td JSON
                 td(class='td-left') MazeId - height:width:seed
                 td(class='td-left') Result
-                td(class='td-left')
-                    a(href=sampleDelete) #{sampleDelete}
                 td Current
                 td(class='td-left') Deletes a single maze document
             tr
+                td(class='td-left')
+                    a(href=sampleList) List Mazes
                 td Get
                 td List
                 td HTML
                 td(class='td-left') N/A
                 td(class='td-left') HTML Page
-                td(class='td-left')
-                    a(href=sampleList) #{sampleList}
                 td Current
                 td(class='td-left') Lists all mazes w/ handy function links
             tr
+                td(class='td-left')
+                    a(href=sampleView) View Maze
                 td Get
                 td View
                 td HTML
                 td(class='td-left') MazeId - height:width:seed
                 td(class='td-left') HTML Page
-                td(class='td-left')
-                    a(href=sampleView) #{sampleView}
                 td Current
                 td(class='td-left') Simple view of a maze w/ text-based rendering.
 

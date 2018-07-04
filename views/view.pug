@@ -9,5 +9,9 @@ html
         hr
         h3 Seed: #{maze.seed}
         h3 Dimensions: #{maze.height} x #{maze.width}
+        if typeof(maze.startCell) !== 'undefined'
+            h4 Start: #{maze.startCell.row}x#{maze.startCell.col}&nbsp;Finish: #{maze.finishCell.row}x#{maze.finishCell.col}
+        else
+            h4(class='notice') This maze appears to be invalid (missing startCell).  Please regenerate and try again.
         p
         pre #{maze.textRender}

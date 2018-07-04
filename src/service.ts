@@ -1,16 +1,21 @@
 require('dotenv').config();
-import path from 'path';
-import { Maze } from './Maze'
+import path, { parse } from 'path';
 import { format } from 'util';
-import * as log from './Logger';
 import express from 'express';
 import { Server } from 'http';
 import { MongoClient } from 'mongodb';
 
+import { Maze, Logger } from 'cc2018-ts-lib';
+
+// get singleton logger instance
+const log = Logger.getInstance();
+log.setLogLevel(parseInt(process.env['LOG_LEVEL'] || '3')); // defaults to "INFO"
+
 // constants from environment variables (or .env file)
-const ENV = process.env['NODE_ENV'] || 'PROD';
+const NODE_ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
 const DB_URL = format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
+
 const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
 
 // general constant values
@@ -26,9 +31,8 @@ let mongoDBClient: MongoClient; // set on successful connection to db
 app.set('views', 'views');
 app.set('view engine', 'pug');
 
-// set the logging level based on current env
-log.setLogLevel((ENV == 'DVLP' ? log.LOG_LEVELS.DEBUG : log.LOG_LEVELS.INFO));
-log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + ENV);
+// log the environment
+log.info(__filename, SVC_NAME, 'Starting service with environment settings for: ' + NODE_ENV);
 
 // only start the web service after connecting to the database
 log.info(__filename, SVC_NAME, 'Connecting to MongoDB: ' + DB_URL);
@@ -47,6 +51,13 @@ MongoClient.connect(DB_URL, function(err, client) {
     // all is well, listen for connections
     httpServer = app.listen(SVC_PORT, function() {
         log.info(__filename, SVC_NAME, 'Listening on port ' + SVC_PORT);
+
+        // allow CORS for this application
+        app.use(function(req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
 
         // accepts MazeID (string concatenation of Height:Width:Seed)
         app.get('/get/:mazeId', (req, res) => {
@@ -73,10 +84,12 @@ MongoClient.connect(DB_URL, function(err, client) {
                     // match was found in the database return it as json
                     log.debug(__filename, req.path, format('Maze "%s" found, return as JSON...', mazeId));
 
-                    // TODO: Marshalling to and from Maze type is not needed here
-                    // Leaving it for now as an example, as it may be useful elsewhere
-                    let lMaze = new Maze().loadFromJSON(JSON.stringify(docs[0]));
-                    res.status(200).json(JSON.stringify(docs[0]));
+                    // send the first matching maze doc
+                    try {
+                        res.status(200).json(docs[0]);
+                    } catch {
+                        res.status(500).json({'status': 'Unable to load maze from JSON.', 'data': JSON.stringify(docs[0])});
+                    }
                 }
             });
         });
@@ -91,7 +104,7 @@ MongoClient.connect(DB_URL, function(err, client) {
         
         // gets all mazes
         app.get('/get', (req, res) => {
-            // search the collection for a maze with the right id
+            // finds all mazes, but only returns basic maze key information
             col.find({}, {fields:{_id:0,id:1,height:1,width:1,seed:1}}).toArray( (err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
@@ -100,11 +113,11 @@ MongoClient.connect(DB_URL, function(err, client) {
 
                 // if no match found, generate a new maze from the given values
                 if (docs.length == 0) {
-                    log.debug(__filename, req.path, format('No mazes foundin collectoin ""', COL_NAME));
-                    res.status(404).json({'status': format('No mazes foundin collectoin ""', COL_NAME)});
+                    log.debug(__filename, req.path, format('No mazes found in collection %s', COL_NAME));
+                    res.status(404).json({'status': format('No mazes found in collectoin %s', COL_NAME)});
                 } else {
                     // match was found in the database return it as json
-                    log.debug(__filename, req.path, format('%d mazes found in "%s", returning JSON ...', docs.length, COL_NAME));
+                    log.debug(__filename, req.path, format('%d mazes found in %s, returning JSON ...', docs.length, COL_NAME));
                     
                     // cosntruct an array with key maze properties and a get url
                     let mazes = new Array();
@@ -120,7 +133,7 @@ MongoClient.connect(DB_URL, function(err, client) {
                     });
 
                     // send the json data
-                    res.status(200).json(JSON.stringify(mazes));
+                    res.status(200).json(mazes);
                 }
             });
         });
@@ -153,13 +166,26 @@ MongoClient.connect(DB_URL, function(err, client) {
                     col.insert(maze);
 
                     log.debug(__filename, req.path, format('Returning Maze "%s" as JSON...', mazeId));
-                    res.status(200).send(JSON.stringify(maze));
+                    res.status(200).json(maze);
                 } catch (error) {
                     log.error(__filename, req.path, format('Error during maze generation: %s', error.message));
                     res.status(500).json({'status':format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, error.message)});
                 }
             });
         });
+
+        app.get('/generate/:mazeId', (req, res) => {
+            log.debug(__filename, req.url, 'Attempting to parse and redirect single mazeId parameter for /generate.');
+            try {
+                let mazeId: string = req.params.mazeId;
+                let mazeIdParts = mazeId.split(':');
+                let newUrl = format('/generate/%d/%d/%s', parseInt(mazeIdParts[0]), parseInt(mazeIdParts[1]), mazeIdParts[2]);
+                return res.redirect(newUrl);
+            } catch (err) {
+                return res.status(400).json({'status':'Unable to parse URL.  Expected format: /generate/HEIGHT/WIDTH/SEED'});
+            }
+        });
+
 
         /**
          * Lists all mazes currently in the database

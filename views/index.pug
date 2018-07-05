@@ -1,22 +1,19 @@
 doctype html
-html
-    head
-        style
-            include style.css
-        title Maze Service - API Documentation
-    body
-        h1 Maze Service - API Documentation
-        hr
+html(lang="en")
+    include head.pug
+    br
+    div(class='container text-center')
+        h1 Maze Service - #{title}
         br
-        table
-            th Link
-            th Action
-            th Type
-            th Arguments
-            th Return
-            th Method
-            th Status
-            th Description
+        table(class='table table-striped table-dark table-hover' style='color:antiquewhite')
+            th(scope='col') Link
+            th(scope='col') Action
+            th(scope='col') Type
+            th(scope='col') Arguments
+            th(scope='col') Return
+            th(scope='col') Method
+            th(scope='col') Status
+            th(scope='col') Description
             tr
                 td(class='td-left')
                     a(href=sampleGet) Get Maze
@@ -77,4 +74,4 @@ html
                 td(class='td-left') HTML Page
                 td Current
                 td(class='td-left') Simple view of a maze w/ text-based rendering.
-
+    include foot.pug

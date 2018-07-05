@@ -1,17 +1,48 @@
 doctype html
-html
-    head
-        style
-            include style.css
-        title Maze Service - View Maze
-    body
+html(lang="en")
+    include head.pug
+    br
+    div(class='container text-center')
         h1 Maze Service - View Maze
-        hr
-        h3 Seed: #{maze.seed}
-        h3 Dimensions: #{maze.height} x #{maze.width}
-        if typeof(maze.startCell) !== 'undefined'
-            h4 Start: #{maze.startCell.row}x#{maze.startCell.col}&nbsp;Finish: #{maze.finishCell.row}x#{maze.finishCell.col}
-        else
-            h4(class='notice') This maze appears to be invalid (missing startCell).  Please regenerate and try again.
+        br
+        table(class='table table-striped table-dark table-hover ' style='color:antiquewhite')
+            thead
+                tr
+                    th(scope='col') Seed
+                    th(scope='col') Rows
+                    th(scope='col') Cols
+                    th(scope='col') Start Cell
+                    th(scope='col') Finish Cell
+            tbody
+                tr
+                    td #{maze.seed}
+                    td #{maze.height}
+                    td #{maze.width}
+                    if typeof(maze.startCell) !== 'undefined'
+                        td #{maze.startCell.row} x #{maze.startCell.col}
+                    else
+                        td ERROR - REGENERATE
+                    if typeof(maze.finishCell) !== 'undefined'
+                        td #{maze.finishCell.row} x #{maze.finishCell.col}
+                    else
+                        td ERROR - REGENERATE
+        - var renderScale = 25 / maze.width;
+        - if (renderScale > 1.5) renderScale = 1.5;
+        - if (renderScale < 0.6) renderScale = 0.6;
+        script 
+            !='var renderScale = ' + renderScale + ';\n'
+            !='function zoomIn() { renderScale += .1; $("#mazeView").css({ "font-size": renderScale + "rem" }); }'
+            !='function zoomOut() { renderScale -= .1; $("#mazeView").css({ "font-size": renderScale + "rem" }); }'
         p
-        pre #{maze.textRender}
+            a(href='#' onClick='zoomIn();' style='font-size:1rem') [ Zoom In ]
+            |&nbsp;&nbsp;&nbsp;
+            a(href='#' onClick='zoomOut();' style='font-size:1rem') [ Zoom Out ]
+        div(class='card')
+            div(class='card-body' style='background-color:#000000')
+                p(class='card-text')
+                    pre(id='mazeView' style='color:#ffffff;font-size:' + renderScale + 'rem') 
+                        |#{maze.textRender}
+                        
+    include foot.pug
+
+//pre(style='color:#ffffff') 

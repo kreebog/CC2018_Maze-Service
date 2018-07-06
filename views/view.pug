@@ -13,6 +13,7 @@ html(lang="en")
                     th(scope='col') Cols
                     th(scope='col') Start Cell
                     th(scope='col') Finish Cell
+                    th(scope='col') Shortest Path
             tbody
                 tr
                     td #{maze.seed}
@@ -26,6 +27,11 @@ html(lang="en")
                         td #{maze.finishCell.row} x #{maze.finishCell.col}
                     else
                         td ERROR - REGENERATE
+                    if typeof(maze.shortestPathLength) !== 'undefined'
+                        td #{maze.shortestPathLength}
+                    else
+                        td ERROR - REGENERATE
+
         - var renderScale = 25 / maze.width;
         - if (renderScale > 1.5) renderScale = 1.5;
         - if (renderScale < 0.6) renderScale = 0.6;

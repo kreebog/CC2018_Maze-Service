@@ -56,9 +56,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
             col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res
-                        .status(500)
-                        .json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    return res.status(500).json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // warn if there are duplicates - we'll only work with the first record found
                 if (docs.length > 1) {
@@ -134,9 +132,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
             col.find({ id: mazeId }).toArray((err, docs) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res
-                        .status(500)
-                        .json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    return res.status(500).json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // warn if there are duplicates - we'll only work with the first record found
                 if (docs.length > 0) {
@@ -170,9 +166,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 return res.redirect(newUrl);
             }
             catch (err) {
-                return res
-                    .status(400)
-                    .json({ status: 'Unable to parse URL.  Expected format: /generate/HEIGHT/WIDTH/SEED' });
+                return res.status(400).json({ status: 'Unable to parse URL.  Expected format: /generate/HEIGHT/WIDTH/SEED' });
             }
         });
         /**
@@ -205,9 +199,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
             col.findOne({ id: mazeId }, { projection: { _id: 0 } }, (err, doc) => {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res
-                        .status(500)
-                        .json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    return res.status(500).json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 if (doc === undefined) {
                     log.debug(__filename, req.path, util_1.format('No maze with id %s found.', mazeId));
@@ -234,9 +226,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
             col.deleteOne({ id: mazeId }, function (err, results) {
                 if (err) {
                     log.error(__filename, req.path, JSON.stringify(err));
-                    return res
-                        .status(500)
-                        .json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                    return res.status(500).json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
                 // send the result code with deleted doc count
                 res.status(200).json({ status: 'ok', count: results.deletedCount });

@@ -14,13 +14,7 @@ log.setLogLevel(parseInt(process.env['LOG_LEVEL'] || '3')); // defaults to "INFO
 // constants from environment variables (or .env file)
 const NODE_ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
-const DB_URL = format(
-    '%s://%s:%s@%s/',
-    process.env['DB_PROTOCOL'],
-    process.env['DB_USER'],
-    process.env['DB_USERPW'],
-    process.env['DB_URL']
-);
+const DB_URL = format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
 
 const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
 
@@ -75,18 +69,12 @@ MongoClient.connect(
                 col.find({ id: mazeId }).toArray((err, docs) => {
                     if (err) {
                         log.error(__filename, req.path, JSON.stringify(err));
-                        return res
-                            .status(500)
-                            .json({ status: format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                        return res.status(500).json({ status: format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                     }
 
                     // warn if there are duplicates - we'll only work with the first record found
                     if (docs.length > 1) {
-                        log.warn(
-                            __filename,
-                            req.path,
-                            format('%d mazes found with id "%s", returning first match.', docs.length, mazeId)
-                        );
+                        log.warn(__filename, req.path, format('%d mazes found with id "%s", returning first match.', docs.length, mazeId));
                     }
 
                     // if no match found, generate a new maze from the given values
@@ -135,11 +123,7 @@ MongoClient.connect(
                         res.status(404).json({ status: format('No mazes found in collectoin %s', COL_NAME) });
                     } else {
                         // match was found in the database return it as json
-                        log.debug(
-                            __filename,
-                            req.path,
-                            format('%d mazes found in %s, returning JSON ...', docs.length, COL_NAME)
-                        );
+                        log.debug(__filename, req.path, format('%d mazes found in %s, returning JSON ...', docs.length, COL_NAME));
 
                         // cosntruct an array with key maze properties and a get url
                         let mazes = new Array();
@@ -169,18 +153,12 @@ MongoClient.connect(
                 col.find({ id: mazeId }).toArray((err, docs) => {
                     if (err) {
                         log.error(__filename, req.path, JSON.stringify(err));
-                        return res
-                            .status(500)
-                            .json({ status: format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                        return res.status(500).json({ status: format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                     }
 
                     // warn if there are duplicates - we'll only work with the first record found
                     if (docs.length > 0) {
-                        log.warn(
-                            __filename,
-                            req.path,
-                            format('%d maze(s) found with id "%s", aborting.', docs.length, mazeId)
-                        );
+                        log.warn(__filename, req.path, format('%d maze(s) found with id "%s", aborting.', docs.length, mazeId));
                         return res.status(400).json({ status: format('Maze "%s" already exists.', mazeId) });
                     }
 
@@ -205,25 +183,14 @@ MongoClient.connect(
             });
 
             app.get('/generate/:mazeId', (req, res) => {
-                log.debug(
-                    __filename,
-                    req.url,
-                    'Attempting to parse and redirect single mazeId parameter for /generate.'
-                );
+                log.debug(__filename, req.url, 'Attempting to parse and redirect single mazeId parameter for /generate.');
                 try {
                     let mazeId: string = req.params.mazeId;
                     let mazeIdParts = mazeId.split(':');
-                    let newUrl = format(
-                        '/generate/%d/%d/%s',
-                        parseInt(mazeIdParts[0]),
-                        parseInt(mazeIdParts[1]),
-                        mazeIdParts[2]
-                    );
+                    let newUrl = format('/generate/%d/%d/%s', parseInt(mazeIdParts[0]), parseInt(mazeIdParts[1]), mazeIdParts[2]);
                     return res.redirect(newUrl);
                 } catch (err) {
-                    return res
-                        .status(400)
-                        .json({ status: 'Unable to parse URL.  Expected format: /generate/HEIGHT/WIDTH/SEED' });
+                    return res.status(400).json({ status: 'Unable to parse URL.  Expected format: /generate/HEIGHT/WIDTH/SEED' });
                 }
             });
 
@@ -260,9 +227,7 @@ MongoClient.connect(
                 col.findOne({ id: mazeId }, { projection: { _id: 0 } }, (err, doc) => {
                     if (err) {
                         log.error(__filename, req.path, JSON.stringify(err));
-                        return res
-                            .status(500)
-                            .json({ status: format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                        return res.status(500).json({ status: format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                     }
 
                     if (doc === undefined) {
@@ -293,9 +258,7 @@ MongoClient.connect(
                 col.deleteOne({ id: mazeId }, function(err, results) {
                     if (err) {
                         log.error(__filename, req.path, JSON.stringify(err));
-                        return res
-                            .status(500)
-                            .json({ status: format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
+                        return res.status(500).json({ status: format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                     }
 
                     // send the result code with deleted doc count

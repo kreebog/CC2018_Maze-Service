@@ -201,7 +201,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                     log.error(__filename, req.path, JSON.stringify(err));
                     return res.status(500).json({ status: util_1.format('Error finding "%s" in "%s": %s', mazeId, COL_NAME, err.message) });
                 }
-                if (doc === undefined) {
+                if (!doc || doc === undefined) {
                     log.debug(__filename, req.path, util_1.format('No maze with id %s found.', mazeId));
                     return res.status(404).json({ status: util_1.format('Maze "%s%" not found.', mazeId) });
                 }

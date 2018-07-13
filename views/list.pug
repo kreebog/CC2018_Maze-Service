@@ -26,7 +26,7 @@ html(lang="en")
                                 | &nbsp;&nbsp;|&nbsp;&nbsp;
                                 a(href='/get/' + maze.height + ':' + maze.width + ':' + maze.seed) json
                                 | &nbsp;&nbsp;|&nbsp;&nbsp;
-                                a(href='/delete/pw' + maze.height + ':' + maze.width + ':' + maze.seed) delete
+                                a(href='/delete/' + maze.height + ':' + maze.width + ':' + maze.seed + '/pw') delete
         else
             h3 No mazes found in the database.
     include foot.pug

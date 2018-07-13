@@ -256,7 +256,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 sampleGetAll: util_1.format('http://%s/get', req.headers.host),
                 sampleGet: util_1.format('http://%s/get/10:15:SimpleSample', req.headers.host),
                 sampleGenerate: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
-                sampleDelete: util_1.format('http://%s/delete/10:15:SimpleSample', req.headers.host),
+                sampleDelete: util_1.format('http://%s/delete/10:15:SimpleSample/pw', req.headers.host),
                 sampleView: util_1.format('http://%s/view/10:15:SimpleSample', req.headers.host),
                 sampleList: util_1.format('http://%s/list', req.headers.host),
                 title: 'API Documentation'

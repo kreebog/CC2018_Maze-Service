@@ -17,6 +17,7 @@ const NODE_ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
 const DB_URL = util_1.format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
 const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
+const DELETE_PASSWORD = process.env.DELETE_PASSWORD;
 // general constant values
 const COL_NAME = 'mazes';
 const SVC_NAME = 'maze-service';
@@ -220,8 +221,11 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
         /**
          * Deletes maze documents with matching ID
          */
-        app.get('/delete/:mazeId', (req, res) => {
+        app.get('/delete/:mazeId/:password', (req, res) => {
             let mazeId = req.params.mazeId;
+            // PASSWORD FOR DELETES FOUND IN ENVIRONMENT VARIABLES
+            if (DELETE_PASSWORD != req.params.password)
+                return res.status(401).json({ status: 'Missing or incorrect password.' });
             // delete the first document with the matching mazeId
             col.deleteOne({ id: mazeId }, function (err, results) {
                 if (err) {

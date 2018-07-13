@@ -18,6 +18,8 @@ const DB_URL = format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env[
 
 const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
 
+const DELETE_PASSWORD = process.env.DELETE_PASSWORD;
+
 // general constant values
 const COL_NAME = 'mazes';
 const SVC_NAME = 'maze-service';
@@ -251,8 +253,11 @@ MongoClient.connect(
             /**
              * Deletes maze documents with matching ID
              */
-            app.get('/delete/:mazeId', (req, res) => {
+            app.get('/delete/:mazeId/:password', (req, res) => {
                 let mazeId = req.params.mazeId;
+
+                // PASSWORD FOR DELETES FOUND IN ENVIRONMENT VARIABLES
+                if (DELETE_PASSWORD != req.params.password) return res.status(401).json({ status: 'Missing or incorrect password.' });
 
                 // delete the first document with the matching mazeId
                 col.deleteOne({ id: mazeId }, function(err, results) {
@@ -287,7 +292,7 @@ MongoClient.connect(
                     sampleGetAll: format('http://%s/get', req.headers.host),
                     sampleGet: format('http://%s/get/10:15:SimpleSample', req.headers.host),
                     sampleGenerate: format('http://%s/generate/10/15/SimpleSample', req.headers.host),
-                    sampleDelete: format('http://%s/delete/10:15:SimpleSample', req.headers.host),
+                    sampleDelete: format('http://%s/delete/10:15:SimpleSample/pw', req.headers.host),
                     sampleView: format('http://%s/view/10:15:SimpleSample', req.headers.host),
                     sampleList: format('http://%s/list', req.headers.host),
                     title: 'API Documentation'

@@ -149,8 +149,9 @@ MongoClient.connect(
             });
 
             // gets maze with the given id (combination of height:width:seed)
-            app.get('/generate/:height/:width/:seed', (req, res) => {
-                let mazeId = format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+            app.get('/generate/:height/:width/:seed/:challengeLevel', (req, res) => {
+                let mazeId: string = format('%d:%d:%s', req.params.height, req.params.width, req.params.seed);
+                let challenge: number = parseInt(req.params.challengeLevel);
 
                 // search the collection for a maze with the right id
                 col.find({ id: mazeId }).toArray((err, docs) => {
@@ -171,6 +172,7 @@ MongoClient.connect(
                     // error handling and input checks are in the Maze class - descriptive error will be returned
                     try {
                         let maze = new Maze().generate(req.params.height, req.params.width, req.params.seed);
+                        maze.setChallengeLevel(challenge);
                         log.debug(__filename, req.path, format('Maze "%s" generated.  Storing...', mazeId));
                         col.insert(maze);
 

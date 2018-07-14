@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
+const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const util_1 = require("util");
 const express_1 = __importDefault(require("express"));
@@ -18,6 +19,8 @@ const DB_NAME = 'cc2018';
 const DB_URL = util_1.format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
 const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
 const DELETE_PASSWORD = process.env.DELETE_PASSWORD;
+const APP_VERSION = getPackageVersion();
+log.info(__filename, '', 'Starting Game Server v' + APP_VERSION);
 // general constant values
 const COL_NAME = 'mazes';
 const SVC_NAME = 'maze-service';
@@ -264,6 +267,10 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
         });
     });
 });
+function getPackageVersion() {
+    let data = JSON.parse(fs_1.default.readFileSync(path_1.default.resolve('package.json'), 'utf8'));
+    return data.version;
+}
 /**
  * Watch for SIGINT (process interrupt signal) and trigger shutdown
  */

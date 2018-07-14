@@ -1,4 +1,5 @@
 require('dotenv').config();
+import fs from 'fs';
 import path from 'path';
 import { format } from 'util';
 import express from 'express';
@@ -15,10 +16,10 @@ log.setLogLevel(parseInt(process.env['LOG_LEVEL'] || '3')); // defaults to "INFO
 const NODE_ENV = process.env['NODE_ENV'] || 'PROD';
 const DB_NAME = 'cc2018';
 const DB_URL = format('%s://%s:%s@%s/', process.env['DB_PROTOCOL'], process.env['DB_USER'], process.env['DB_USERPW'], process.env['DB_URL']);
-
 const SVC_PORT = process.env.MAZE_SVC_PORT || 8080;
-
 const DELETE_PASSWORD = process.env.DELETE_PASSWORD;
+const APP_VERSION = getPackageVersion();
+log.info(__filename, '', 'Starting Game Server v' + APP_VERSION);
 
 // general constant values
 const COL_NAME = 'mazes';
@@ -301,6 +302,11 @@ MongoClient.connect(
         });
     }
 );
+
+function getPackageVersion(): string {
+    let data = JSON.parse(fs.readFileSync(path.resolve('package.json'), 'utf8'));
+    return data.version;
+}
 
 /**
  * Watch for SIGINT (process interrupt signal) and trigger shutdown

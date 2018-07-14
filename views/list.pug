@@ -14,6 +14,7 @@ html(lang="en")
                         th(scope='col') Height
                         th(scope='col') Width
                         th(scope='col') Seed
+                        th(scope='col') Challenge
                         th(scope='col') Actions
                 tbody
                     each maze in mazes
@@ -21,6 +22,7 @@ html(lang="en")
                             td= maze.height
                             td= maze.width
                             td= maze.seed
+                            td= maze.challenge
                             td
                                 a(href='/view/' + maze.height + ':' + maze.width + ':' + maze.seed) view
                                 | &nbsp;&nbsp;|&nbsp;&nbsp;

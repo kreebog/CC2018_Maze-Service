@@ -163,16 +163,20 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 }
             });
         });
-        app.get('/generate/:mazeId', (req, res) => {
+        app.get(['/generate/:mazeId', '/generate/:height/:width/:seed'], (req, res) => {
+            res.status(400).json({ status: 'Deprecated. Please use /generate/mazeId/challengeLevel' });
+        });
+        app.get('/generate/:mazeId/:challengeLevel', (req, res) => {
             log.debug(__filename, req.url, 'Attempting to parse and redirect single mazeId parameter for /generate.');
             try {
                 let mazeId = req.params.mazeId;
                 let mazeIdParts = mazeId.split(':');
+                let challengeLevel = req.params.challengeLevel;
                 let newUrl = util_1.format('/generate/%d/%d/%s', parseInt(mazeIdParts[0]), parseInt(mazeIdParts[1]), mazeIdParts[2]);
-                return res.redirect(newUrl);
+                res.redirect(newUrl);
             }
             catch (err) {
-                return res.status(400).json({ status: 'Unable to parse URL.  Expected format: /generate/HEIGHT/WIDTH/SEED' });
+                res.status(500).json({ status: 'Unable generate maze. Bad URL? Expected format: /generate/H:W:Seed/ChallengLevel' });
             }
         });
         /**
@@ -260,7 +264,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 responseCode: 404,
                 sampleGetAll: util_1.format('http://%s/get', req.headers.host),
                 sampleGet: util_1.format('http://%s/get/10:15:SimpleSample', req.headers.host),
-                sampleGenerate: util_1.format('http://%s/generate/10/15/SimpleSample', req.headers.host),
+                sampleGenerate: util_1.format('http://%s/generate/10/15/SimpleSample/1', req.headers.host),
                 sampleDelete: util_1.format('http://%s/delete/10:15:SimpleSample/pw', req.headers.host),
                 sampleView: util_1.format('http://%s/view/10:15:SimpleSample', req.headers.host),
                 sampleList: util_1.format('http://%s/list', req.headers.host),

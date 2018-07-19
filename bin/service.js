@@ -107,12 +107,12 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 // if no match found, generate a new maze from the given values
                 if (docs.length == 0) {
                     log.debug(__filename, req.path, util_1.format('No mazes found in collection %s', COL_NAME));
-                    res.status(404).json({ status: util_1.format('No mazes found in collectoin %s', COL_NAME) });
+                    res.status(404).json({ status: util_1.format('No mazes found in collection %s', COL_NAME) });
                 }
                 else {
                     // match was found in the database return it as json
                     log.debug(__filename, req.path, util_1.format('%d mazes found in %s, returning JSON ...', docs.length, COL_NAME));
-                    // cosntruct an array with key maze properties and a get url
+                    // construct an array with key maze properties and a get url
                     let mazes = new Array();
                     docs.forEach(doc => {
                         let stub = {
@@ -148,8 +148,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 log.debug(__filename, req.path, util_1.format('Generating maze "%s"...', mazeId));
                 // error handling and input checks are in the Maze class - descriptive error will be returned
                 try {
-                    let maze = new cc2018_ts_lib_1.Maze().generate(req.params.height, req.params.width, req.params.seed);
-                    maze.setChallengeLevel(challenge);
+                    let maze = new cc2018_ts_lib_1.Maze().generate(req.params.height, req.params.width, req.params.seed, req.params.challengeLevel);
                     log.debug(__filename, req.path, util_1.format('Maze "%s" generated.  Storing...', mazeId));
                     col.insert(maze);
                     log.debug(__filename, req.path, util_1.format('Returning Maze "%s" as JSON...', mazeId));
@@ -176,7 +175,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
                 res.redirect(newUrl);
             }
             catch (err) {
-                res.status(500).json({ status: 'Unable generate maze. Bad URL? Expected format: /generate/H:W:Seed/ChallengLevel' });
+                res.status(500).json({ status: 'Unable generate maze. Bad URL? Expected format: /generate/H:W:Seed/ChallengeLevel' });
             }
         });
         /**
@@ -254,7 +253,7 @@ mongodb_1.MongoClient.connect(DB_URL, function (err, client) {
             res.status(200).sendFile(path_1.default.resolve('views/favicon.ico'));
         });
         /**
-         * Misrouted traffic catch-all
+         * Mis-routed traffic catch-all
          */
         app.get('/*', (req, res) => {
             log.debug(__filename, req.path, 'Unhandled route - redirecting to index.html.');
@@ -282,7 +281,7 @@ function getPackageVersion() {
  */
 process.on('SIGINT', function onSigInt() {
     // all done, close the db connection
-    log.info(__filename, 'onSigInt()', 'Got SIGINT - Exiting applicaton...');
+    log.info(__filename, 'onSigInt()', 'Got SIGINT - Exiting application...');
     doShutdown();
 });
 /**
@@ -290,7 +289,7 @@ process.on('SIGINT', function onSigInt() {
  */
 process.on('SIGTERM', function onSigTerm() {
     // all done, close the db connection
-    log.info(__filename, 'onSigTerm()', 'Got SIGTERM - Exiting applicaton...');
+    log.info(__filename, 'onSigTerm()', 'Got SIGTERM - Exiting application...');
     doShutdown();
 });
 /**
